@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class ControladorDenuncias extends Controller
+{
+    public function index()
+    {
+        return view('denuncia');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'tipo_violencia' => 'required',
+            'descripcion' => 'required|min:10',
+        ]);
+
+        // Llamada al Stored Procedure
+        DB::select('CALL sp_registrar_denuncia(?, ?, ?, ?)', [
+            auth()->id(),
+            $request->es_anonimo,
+            $request->tipo_violencia,
+            $request->descripcion,
+
+        ]);
+        return back()->with('success', 'Tu reporte ha sido enviado. Un psicólogo lo revisará pronto.');
+    }
+}

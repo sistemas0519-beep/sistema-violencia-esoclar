@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class ControladorSeguimiento extends Controller
+{
+    public function registrarSeguimiento(Request $request, $caso_id)
+    {
+        $request->validate([
+            'observaciones' => 'required',
+            'nuevo_estado' => 'required' // Ej: 'En Seguimiento' o 'Cerrado'
+        ]);
+
+        // Ejecuta el procedimiento almacenado que actualiza el caso e inserta el seguimiento
+        DB::select('CALL sp_añadir_seguimiento(?, ?, ?, ?)', [
+            $caso_id,
+            auth()->id(), // ID del Psicólogo logueado
+            $request->observaciones,
+            $request->nuevo_estado
+        ]);
+
+        return redirect()->route('psicologo.dashboard')->with('status', 'Seguimiento registrado con éxito.');
+    }
+}
