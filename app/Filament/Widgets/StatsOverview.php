@@ -2,40 +2,89 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Caso;
-use App\Models\User;
+use App\Models\Documento;
+use App\Services\ReportesService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Cache;
 
 class StatsOverview extends BaseWidget
 {
+    protected static ?int $sort = -2;
+    protected static bool $isLazy = true;
+
     protected function getStats(): array
     {
+        // Obtener todas las estadísticas del servicio (caché)
+        $stats = ReportesService::getEstadisticasGenerales();
+        $casos = $stats['casos'];
+        $asignaciones = $stats['asignaciones'];
+        $usuarios = $stats['usuarios'];
+
+        // Gráfico de últimos 7 días (caché separado)
+        $chartData = Cache::remember('stats:chart_7dias', 300, function () {
+            return array_values(
+                collect(range(6, 0))
+                    ->map(function ($days) {
+                        $date = today()->subDays($days);
+                        return \App\Models\Caso::whereDate('created_at', $date)->count();
+                    })
+                    ->toArray()
+            );
+        });
+
         return [
-            Stat::make('Total de Casos', Caso::count())
-                ->description('Casos registrados en el sistema')
+            Stat::make('Total de Casos', $casos['total'])
+                ->description($casos['hoy'] . ' nuevos hoy')
                 ->descriptionIcon('heroicon-m-shield-exclamation')
-                ->color('primary'),
+                ->color('primary')
+                ->chart($chartData),
 
-            Stat::make('Casos Pendientes', Caso::where('estado', 'pendiente')->count())
-                ->description('Requieren atención inmediata')
+            Stat::make('Casos Pendientes', $casos['pendiente'])
+                ->description('Requieren atención')
                 ->descriptionIcon('heroicon-m-clock')
-                ->color('warning'),
+                ->color('warning')
+                ->url('/admin/casos'),
 
-            Stat::make('En Proceso', Caso::where('estado', 'en_proceso')->count())
-                ->description('Bajo seguimiento activo')
-                ->descriptionIcon('heroicon-m-arrow-path')
-                ->color('info'),
+            Stat::make('Casos Urgentes', $casos['urgente'])
+                ->description('Prioridad máxima')
+                ->descriptionIcon('heroicon-m-fire')
+                ->color('danger')
+                ->url('/admin/casos'),
 
-            Stat::make('Casos Resueltos', Caso::where('estado', 'resuelto')->count())
-                ->description('Atendidos satisfactoriamente')
+            Stat::make('Casos Resueltos', $casos['resuelto'])
+                ->description('Tasa resolución: ' . $this->getTasaResolucion($casos) . '%')
                 ->descriptionIcon('heroicon-m-check-circle')
-                ->color('success'),
+                ->color('success')
+                ->url('/admin/casos'),
 
-            Stat::make('Usuarios Registrados', User::count())
-                ->description('Estudiantes, docentes y personal')
-                ->descriptionIcon('heroicon-m-users')
+            Stat::make('Asignaciones Activas', $asignaciones['activa'])
+                ->description('Psicólogos atendiendo')
+                ->descriptionIcon('heroicon-m-user-group')
+                ->color('info')
+                ->url('/admin/asignaciones'),
+
+            Stat::make('Documentos', Documento::count())
+                ->description('Archivos en el sistema')
+                ->descriptionIcon('heroicon-m-document-text')
                 ->color('gray'),
+
+            Stat::make('SLA Vencido', $casos['sla_vencido'])
+                ->description('Casos fuera de plazo')
+                ->descriptionIcon('heroicon-m-exclamation-triangle')
+                ->color($casos['sla_vencido'] > 0 ? 'danger' : 'success'),
+
+            Stat::make('Psicólogos Disponibles', $usuarios['psicologos_disponibles'])
+                ->description('De ' . $usuarios['psicologos'] . ' psicólogos')
+                ->descriptionIcon('heroicon-m-user-plus')
+                ->color($usuarios['psicologos_disponibles'] > 0 ? 'success' : 'warning'),
         ];
+    }
+
+    private function getTasaResolucion(array $casos): string
+    {
+        $total = $casos['total'] ?: 1;
+        $resueltos = $casos['resuelto'] + $casos['cerrado'];
+        return round(($resueltos / $total) * 100, 1);
     }
 }

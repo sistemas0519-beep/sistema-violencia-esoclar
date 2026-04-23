@@ -13,13 +13,29 @@ class ControladorSeguimiento extends Controller
      */
     public function index()
     {
-        // Usa el scope paraPsicologo, asignado se carga automáticamente en el modelo
+        $userId = auth()->id();
+
         $casos = Caso::with('seguimientos')
-            ->paraPsicologo(auth()->id())
+            ->paraPsicologo($userId)
             ->orderByDesc('created_at')
             ->paginate(12);
 
-        return view('psicologo.dashboard', compact('casos'));
+        $misAsignados = Caso::where('asignado_a', $userId)->count();
+        $pendientes = Caso::where('asignado_a', $userId)->where('estado', 'pendiente')->count();
+        $enProceso = Caso::where('asignado_a', $userId)->where('estado', 'en_proceso')->count();
+        $resueltos = Caso::where('asignado_a', $userId)->where('estado', 'resuelto')->count();
+        $sinAsignar = Caso::whereNull('asignado_a')->where('estado', 'pendiente')->count();
+
+        $seguimientosRecientes = Seguimiento::with(['caso', 'responsable'])
+            ->where('responsable_id', $userId)
+            ->orderByDesc('fecha_seguimiento')
+            ->limit(5)
+            ->get();
+
+        return view('psicologo.dashboard', compact(
+            'casos', 'misAsignados', 'pendientes', 'enProceso', 'resueltos',
+            'sinAsignar', 'seguimientosRecientes'
+        ));
     }
 
     /**

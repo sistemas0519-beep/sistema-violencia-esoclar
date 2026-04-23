@@ -466,6 +466,46 @@
     </div>
 </div>
 
+<!-- ── Consulta de expediente ── -->
+<div style="position:relative;z-index:1;max-width:680px;margin:0 auto 5rem;padding:0 1.5rem;">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:2.25rem 2rem;">
+        <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.6rem;">
+            <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+            <h3 style="font-size:1.1rem;font-weight:800;">Consulta tu expediente</h3>
+        </div>
+        <p style="font-size:.875rem;color:var(--text-muted);line-height:1.65;margin-bottom:1.5rem;">
+            ¿Ya enviaste un reporte? Consulta el estado de tu caso ingresando tu número de expediente o tu nombre.
+        </p>
+        <form method="GET" action="{{ route('consultar.expediente') }}" style="display:flex;gap:.6rem;flex-wrap:wrap;">
+            <input
+                type="text"
+                name="q"
+                placeholder="Ej. VIO-2026-ABCDE1 o tu nombre completo"
+                style="flex:1;min-width:200px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:.7rem 1rem;color:var(--text-primary);font-size:.9rem;font-family:inherit;outline:none;"
+                onfocus="this.style.borderColor='rgba(99,102,241,0.5)'"
+                onblur="this.style.borderColor='var(--border)'"
+                required
+            >
+            <button type="submit"
+                style="display:inline-flex;align-items:center;gap:.4rem;padding:.7rem 1.4rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;font-size:.875rem;font-weight:600;cursor:pointer;">
+                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                Consultar
+            </button>
+        </form>
+        <p style="margin-top:.6rem;font-size:.75rem;color:var(--text-muted);">
+            También puedes
+            <a href="{{ route('consultar.expediente') }}" style="color:#818cf8;text-decoration:underline;">ir a la página completa de consulta</a>
+            para buscar por nombre.
+        </p>
+    </div>
+</div>
+
 <!-- ── Footer ── -->
 <footer>
     <p>© {{ date('Y') }} Sistema de Prevención de Violencia Escolar · Todos los derechos reservados.</p>

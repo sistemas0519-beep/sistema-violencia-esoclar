@@ -1,0 +1,1032 @@
+﻿<x-filament-panels::page>
+<div>
+<style>
+/* ─── Animaciones entrada ─────────────────────────────── */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.88); }
+    to   { opacity: 1; transform: scale(1);    }
+}
+@keyframes growBar {
+    from { width: 0 !important; }
+    to   { width: var(--w); }
+}
+@keyframes pulseSoft {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,.35); }
+    50%       { box-shadow: 0 0 0 8px rgba(99,102,241,0);  }
+}
+
+.anim-fade-up  { animation: fadeUp  .55s ease both; }
+.anim-scale-in { animation: scaleIn .45s ease both; }
+.delay-1  { animation-delay: .08s; }
+.delay-2  { animation-delay: .16s; }
+.delay-3  { animation-delay: .24s; }
+.delay-4  { animation-delay: .32s; }
+.delay-5  { animation-delay: .40s; }
+.delay-6  { animation-delay: .48s; }
+
+.stat-bar {
+    width: 0;
+    animation: growBar .9s cubic-bezier(.25,.46,.45,.94) forwards;
+}
+.bd-1 { animation-delay: .20s; }
+.bd-2 { animation-delay: .35s; }
+.bd-3 { animation-delay: .50s; }
+.bd-4 { animation-delay: .65s; }
+.bd-5 { animation-delay: .80s; }
+.bd-6 { animation-delay: .95s; }
+.bd-7 { animation-delay: 1.10s; }
+.bd-8 { animation-delay: 1.25s; }
+
+.kpi-glow { animation: pulseSoft 2.5s ease-in-out infinite; }
+
+.card-hover {
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px -4px rgba(0,0,0,.12);
+}
+
+/* ─── Print / PDF ─────────────────────────────────────── */
+@media print {
+    .no-print  { display: none !important; }
+    body, html { background: white !important; }
+    .anim-fade-up, .anim-scale-in { animation: none !important; opacity: 1 !important; }
+    .stat-bar { animation: none !important; width: var(--w) !important; }
+    table thead tr { background: #4F46E5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    table thead th { color: white !important; }
+}
+</style>
+
+{{-- ═══════════════════════
+     BANNER SUPERIOR
+═══════════════════════ --}}
+<div class="relative overflow-hidden rounded-2xl mb-6 bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 p-6 shadow-lg no-print anim-fade-up">
+    <div class="absolute inset-0 opacity-10"
+         style="background-image: radial-gradient(circle at 20% 50%, white 1px, transparent 1px),
+                radial-gradient(circle at 80% 20%, white 1px, transparent 1px);
+                background-size: 40px 40px;"></div>
+    <div class="relative flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-black text-white tracking-tight">Reportes y Estadísticas</h2>
+            <p class="text-indigo-100 text-sm mt-1">Panel de análisis · {{ now()->format('d/m/Y H:i') }}</p>
+        </div>
+        <div class="flex items-center gap-2 bg-white/10 backdrop-blur text-white text-sm px-3 py-1.5 rounded-full">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            {{ now()->isoFormat('D [de] MMMM [de] Y') }}
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════════════
+     FILTROS
+═══════════════════════ --}}
+<div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6 mb-6 no-print anim-fade-up delay-1">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center">
+                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
+                </svg>
+            </div>
+            <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Filtrar Reporte</h3>
+        </div>
+        @if($fecha_inicio || $fecha_fin || $tipo_violencia || $estado)
+            <button wire:click="limpiarFiltros"
+                    class="text-xs text-red-500 hover:text-red-700 font-semibold flex items-center gap-1
+                           transition px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                Limpiar filtros
+            </button>
+        @endif
+    </div>
+    <form wire:submit.prevent class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {{ $this->form }}
+    </form>
+</div>
+
+{{-- ═══════════════════════
+     KPIs - TARJETAS GRADIENTE
+═══════════════════════ --}}
+@php $r = $this->resumen; @endphp
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 p-5 shadow-lg card-hover anim-scale-in delay-1 kpi-glow">
+        <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/10"></div>
+        <div class="absolute right-0 bottom-0 w-14 h-14 rounded-full bg-white/5"></div>
+        <div class="relative">
+            <span class="text-indigo-200 text-xs font-semibold uppercase tracking-wide">Total Casos</span>
+            <div class="text-4xl font-black text-white mt-1">{{ $r['total'] }}</div>
+            <div class="text-indigo-200 text-xs mt-1.5">con filtros aplicados</div>
+        </div>
+        <div class="absolute top-4 right-4 text-2xl">📋</div>
+    </div>
+
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 p-5 shadow-lg card-hover anim-scale-in delay-2">
+        <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/10"></div>
+        <div class="relative">
+            <span class="text-emerald-100 text-xs font-semibold uppercase tracking-wide">Tasa Resolución</span>
+            <div class="text-4xl font-black text-white mt-1">{{ $r['tasa_resolucion'] }}%</div>
+            <div class="w-full bg-white/20 rounded-full h-1.5 mt-2.5">
+                <div class="bg-white h-1.5 rounded-full stat-bar bd-1" style="--w: {{ $r['tasa_resolucion'] }}%"></div>
+            </div>
+        </div>
+        <div class="absolute top-4 right-4 text-2xl">🎯</div>
+    </div>
+
+    <div class="relative overflow-hidden rounded-2xl p-5 shadow-lg card-hover anim-scale-in delay-3
+        {{ $r['sin_asignar'] > 0 ? 'bg-gradient-to-br from-amber-500 to-orange-500' : 'bg-gradient-to-br from-gray-400 to-gray-500' }}">
+        <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/10"></div>
+        <div class="relative">
+            <span class="text-amber-100 text-xs font-semibold uppercase tracking-wide">Sin Asignar</span>
+            <div class="text-4xl font-black text-white mt-1">{{ $r['sin_asignar'] }}</div>
+            <div class="text-amber-100 text-xs mt-1.5">pendientes de asignación</div>
+        </div>
+        <div class="absolute top-4 right-4 text-2xl">⚠️</div>
+    </div>
+
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 p-5 shadow-lg card-hover anim-scale-in delay-4">
+        <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/10"></div>
+        <div class="relative">
+            <span class="text-violet-100 text-xs font-semibold uppercase tracking-wide">Anónimos</span>
+            <div class="text-4xl font-black text-white mt-1">{{ $r['anonimos'] }}</div>
+            <div class="text-violet-100 text-xs mt-1.5">
+                {{ $r['total'] > 0 ? round(($r['anonimos'] / $r['total']) * 100, 1) : 0 }}% del total
+            </div>
+        </div>
+        <div class="absolute top-4 right-4 text-2xl">🔒</div>
+    </div>
+
+</div>
+
+{{-- ═══════════════════════
+     ESTADOS + DONUT
+═══════════════════════ --}}
+@php
+    $estadosData = [
+        ['label' => 'Pendientes', 'val' => $r['pendiente'],  'bar' => 'bg-amber-400',   'dot' => 'bg-amber-400',   'txt' => 'text-amber-600 dark:text-amber-400',   'hex' => '#f59e0b', 'icon' => '⏳'],
+        ['label' => 'En Proceso', 'val' => $r['en_proceso'], 'bar' => 'bg-blue-500',    'dot' => 'bg-blue-500',    'txt' => 'text-blue-600 dark:text-blue-400',     'hex' => '#3b82f6', 'icon' => '🔄'],
+        ['label' => 'Resueltos',  'val' => $r['resuelto'],   'bar' => 'bg-emerald-500', 'dot' => 'bg-emerald-500', 'txt' => 'text-emerald-600 dark:text-emerald-400','hex' => '#10b981', 'icon' => '✅'],
+        ['label' => 'Cerrados',   'val' => $r['cerrado'],    'bar' => 'bg-gray-400',    'dot' => 'bg-gray-400',    'txt' => 'text-gray-500 dark:text-gray-400',     'hex' => '#6b7280', 'icon' => '🔒'],
+    ];
+    $totalBase = $r['total'] ?: 1;
+    $conicParts = [];
+    $off = 0;
+    foreach ($estadosData as $e) {
+        $p = $r['total'] > 0 ? round(($e['val'] / $r['total']) * 100, 2) : 0;
+        $conicParts[] = "{$e['hex']} {$off}% " . ($off + $p) . "%";
+        $off += $p;
+    }
+    $conicGrad = implode(', ', $conicParts) ?: '#e5e7eb 0% 100%';
+@endphp
+
+<div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6 mb-6 anim-fade-up delay-3">
+    <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-5 flex items-center gap-2">
+        <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center text-sm">📊</span>
+        Distribución por estado
+    </h3>
+    <div class="flex flex-col lg:flex-row items-center gap-8">
+
+        {{-- Donut CSS --}}
+        <div class="relative flex-shrink-0" style="width:160px;height:160px;">
+            <div class="w-full h-full rounded-full transition-all duration-700"
+                 style="background: conic-gradient({{ $conicGrad }});"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-24 h-24 rounded-full bg-white dark:bg-gray-800 flex flex-col items-center justify-center shadow-inner">
+                    <span class="text-2xl font-black text-gray-800 dark:text-white">{{ $r['total'] }}</span>
+                    <span class="text-xs text-gray-400">total</span>
+                </div>
+            </div>
+        </div>
+
+        {{-- Barras --}}
+        <div class="flex-1 w-full space-y-4">
+            @foreach($estadosData as $idx => $e)
+                @php $pct = $r['total'] > 0 ? round(($e['val'] / $r['total']) * 100, 1) : 0; @endphp
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full {{ $e['dot'] }} flex-shrink-0"></span>
+                            <span class="font-medium text-sm text-gray-700 dark:text-gray-300">{{ $e['icon'] }} {{ $e['label'] }}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-gray-400">{{ $pct }}%</span>
+                            <span class="font-bold text-lg {{ $e['txt'] }} min-w-[2rem] text-right">{{ $e['val'] }}</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                        <div class="{{ $e['bar'] }} h-3 rounded-full stat-bar bd-{{ $idx + 1 }}"
+                             style="--w: {{ $pct }}%"></div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════════════
+     ASIGNACIONES RESUMEN
+═══════════════════════ --}}
+@php $asig = $this->asignacionesResumen; @endphp
+<div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6 mb-6 anim-fade-up delay-3">
+    <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-5 flex items-center gap-2">
+        <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center text-sm">🗂</span>
+        Estado global de asignaciones
+    </h3>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        @foreach([
+            ['label' => 'Total',       'val' => $asig['total'],       'icon' => '📋', 'from' => 'from-indigo-500', 'to' => 'to-indigo-600'],
+            ['label' => 'Activas',     'val' => $asig['activas'],     'icon' => '🟢', 'from' => 'from-emerald-500','to' => 'to-emerald-600'],
+            ['label' => 'Finalizadas', 'val' => $asig['finalizadas'], 'icon' => '✔️', 'from' => 'from-blue-500',   'to' => 'to-blue-600'],
+            ['label' => 'Canceladas',  'val' => $asig['canceladas'],  'icon' => '❌', 'from' => 'from-red-500',    'to' => 'to-red-600'],
+        ] as $idx => $a)
+            <div class="rounded-xl bg-gradient-to-br {{ $a['from'] }} {{ $a['to'] }} p-4 text-center card-hover anim-scale-in delay-{{ $idx + 1 }}">
+                <div class="text-2xl mb-1">{{ $a['icon'] }}</div>
+                <div class="text-3xl font-black text-white">{{ $a['val'] }}</div>
+                <div class="text-white/80 text-xs mt-0.5">{{ $a['label'] }}</div>
+                @if($asig['total'] > 0)
+                    <div class="text-white/60 text-xs">{{ round(($a['val'] / max($asig['total'], 1)) * 100, 1) }}%</div>
+                @endif
+            </div>
+        @endforeach
+    </div>
+</div>
+
+{{-- ═══════════════════════
+     TIPO + MES
+═══════════════════════ --}}
+@php
+    $tipoNombre = [
+        'fisica'         => 'Física',
+        'psicologica'    => 'Psicológica',
+        'verbal'         => 'Verbal',
+        'sexual'         => 'Sexual',
+        'ciberacoso'     => 'Ciberacoso',
+        'discriminacion' => 'Discriminación',
+        'otro'           => 'Otro',
+    ];
+    $colorTipo = [
+        'fisica'         => ['bar' => 'bg-red-500',    'badge' => 'bg-red-50 text-red-700'],
+        'psicologica'    => ['bar' => 'bg-orange-500', 'badge' => 'bg-orange-50 text-orange-700'],
+        'verbal'         => ['bar' => 'bg-yellow-500', 'badge' => 'bg-yellow-50 text-yellow-700'],
+        'sexual'         => ['bar' => 'bg-pink-500',   'badge' => 'bg-pink-50 text-pink-700'],
+        'ciberacoso'     => ['bar' => 'bg-blue-500',   'badge' => 'bg-blue-50 text-blue-700'],
+        'discriminacion' => ['bar' => 'bg-purple-500', 'badge' => 'bg-purple-50 text-purple-700'],
+        'otro'           => ['bar' => 'bg-gray-400',   'badge' => 'bg-gray-50 text-gray-600'],
+    ];
+@endphp
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+    {{-- Por tipo --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6 anim-fade-up delay-4">
+        <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-5 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-900/30 flex items-center justify-center text-sm">📊</span>
+            Por tipo de violencia
+        </h3>
+        @php
+            $tipos   = $this->porTipo;
+            $maxTipo = collect($tipos)->max('total') ?: 1;
+        @endphp
+        @if(empty($tipos))
+            <div class="flex flex-col items-center py-10 text-gray-300 gap-2">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="text-sm">Sin datos para mostrar</span>
+            </div>
+        @else
+            <div class="space-y-4">
+                @foreach($tipos as $idx => $t)
+                    @php
+                        $c   = $colorTipo[$t['tipo']] ?? $colorTipo['otro'];
+                        $pct = round(($t['total'] / $maxTipo) * 100);
+                    @endphp
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="font-semibold text-sm text-gray-700 dark:text-gray-300">
+                                {{ $tipoNombre[$t['tipo']] ?? $t['tipo'] }}
+                            </span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-400">{{ $t['porcentaje'] }}%</span>
+                                <span class="text-xs font-bold px-2 py-0.5 rounded-full {{ $c['badge'] }}">
+                                    {{ $t['total'] }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                            <div class="{{ $c['bar'] }} h-3 rounded-full stat-bar bd-{{ min($idx + 1, 8) }}"
+                                 style="--w: {{ $pct }}%"></div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
+    {{-- Evolución mensual --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6 anim-fade-up delay-4">
+        <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-5 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-sm">📅</span>
+            Evolución mensual
+        </h3>
+        @php
+            $meses  = $this->porMes;
+            $maxMes = collect($meses)->max('total') ?: 1;
+        @endphp
+        @if(empty($meses))
+            <div class="flex flex-col items-center py-10 text-gray-300 gap-2">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span class="text-sm">Sin datos para mostrar</span>
+            </div>
+        @else
+            <div class="space-y-4">
+                @foreach($meses as $idx => $m)
+                    @php $pct = round(($m['total'] / $maxMes) * 100); @endphp
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="font-semibold text-sm text-gray-700 dark:text-gray-300 capitalize">{{ $m['mes'] }}</span>
+                            <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400 tabular-nums">{{ $m['total'] }}</span>
+                        </div>
+                        <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                            <div class="bg-gradient-to-r from-indigo-400 to-violet-500 h-3 rounded-full stat-bar bd-{{ min($idx + 1, 8) }}"
+                                 style="--w: {{ $pct }}%"></div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
+</div>
+
+{{-- ═══════════════════════
+     PSICÓLOGOS + REGIONES
+═══════════════════════ --}}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6 anim-fade-up delay-5">
+        <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-5 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-sm">👨‍⚕️</span>
+            Carga por psicólogo
+        </h3>
+        @php
+            $psicologos = $this->porPsicologo;
+            $maxCarga   = collect($psicologos)->max('total') ?: 1;
+        @endphp
+        @if(empty($psicologos))
+            <div class="flex items-center justify-center py-10 text-gray-300 text-sm">
+                Sin psicólogos registrados
+            </div>
+        @else
+            <div class="space-y-4">
+                @foreach($psicologos as $idx => $p)
+                    @php $pct = round(($p['total'] / $maxCarga) * 100); @endphp
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 text-xs font-black flex-shrink-0">
+                                    {{ strtoupper(mb_substr($p['nombre'], 0, 1)) }}
+                                </div>
+                                <span class="font-semibold text-sm text-gray-700 dark:text-gray-300 truncate max-w-[150px]">
+                                    {{ $p['nombre'] }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-xs flex-shrink-0">
+                                <span class="px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 font-semibold">{{ $p['activas'] }}A</span>
+                                <span class="px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-700 font-semibold">{{ $p['finalizadas'] }}F</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                            <div class="bg-gradient-to-r from-blue-400 to-indigo-500 h-3 rounded-full stat-bar bd-{{ min($idx + 1, 8) }}"
+                                 style="--w: {{ $pct }}%"></div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6 anim-fade-up delay-5">
+        <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-5 flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-sm">🗺</span>
+            Casos por región
+        </h3>
+        @php
+            $regiones = $this->porRegion;
+            $maxReg   = collect($regiones)->max('total') ?: 1;
+        @endphp
+        @if(empty($regiones))
+            <div class="flex items-center justify-center py-10 text-gray-300 text-sm">
+                Sin información geográfica registrada
+            </div>
+        @else
+            <div class="space-y-4">
+                @foreach($regiones as $idx => $reg)
+                    @php $pct = round(($reg['total'] / $maxReg) * 100); @endphp
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="font-semibold text-sm text-gray-700 dark:text-gray-300 capitalize">
+                                {{ ucfirst(strtolower($reg['region'])) }}
+                            </span>
+                            <span class="text-sm font-bold text-teal-600 dark:text-teal-400 tabular-nums">{{ $reg['total'] }}</span>
+                        </div>
+                        <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                            <div class="bg-gradient-to-r from-teal-400 to-emerald-500 h-3 rounded-full stat-bar bd-{{ min($idx + 1, 8) }}"
+                                 style="--w: {{ $pct }}%"></div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
+</div>
+
+{{-- ═══════════════════════
+     EXPORTAR
+═══════════════════════ --}}
+<div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6 mb-6 no-print anim-fade-up delay-5">
+    <div class="flex flex-wrap items-center justify-between gap-5">
+        <div>
+            <h3 class="font-bold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+                <span class="text-lg">📤</span> Exportar Reporte
+            </h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Descarga los <strong>{{ $r['total'] }}</strong> casos filtrados en el formato que necesitas.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+
+            {{-- CSV --}}
+            <button wire:click="exportarCsv" wire:loading.attr="disabled" wire:target="exportarCsv"
+                    class="inline-flex items-center gap-2 bg-emerald-50 hover:bg-emerald-600 border border-emerald-200
+                           hover:border-emerald-600 text-emerald-700 hover:text-white text-sm font-semibold
+                           px-5 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 17v-2m3 2v-4m3 4v-6M12 10V4m0 0a2 2 0 012 2v0M12 4a2 2 0 00-2 2v0M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"/>
+                </svg>
+                <span wire:loading.remove wire:target="exportarCsv">CSV</span>
+                <span wire:loading wire:target="exportarCsv" class="inline-flex items-center gap-1">
+                    <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    </svg>
+                    Generando…
+                </span>
+            </button>
+
+            {{-- Excel --}}
+            <button wire:click="exportarExcel" wire:loading.attr="disabled" wire:target="exportarExcel"
+                    class="inline-flex items-center gap-2 bg-indigo-50 hover:bg-indigo-600 border border-indigo-200
+                           hover:border-indigo-600 text-indigo-700 hover:text-white text-sm font-semibold
+                           px-5 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                </svg>
+                <span wire:loading.remove wire:target="exportarExcel">Excel (.xls)</span>
+                <span wire:loading wire:target="exportarExcel" class="inline-flex items-center gap-1">
+                    <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    </svg>
+                    Generando…
+                </span>
+            </button>
+
+            {{-- PDF vía Print --}}
+            <button onclick="window.print()"
+                    class="inline-flex items-center gap-2 bg-rose-50 hover:bg-rose-600 border border-rose-200
+                           hover:border-rose-600 text-rose-700 hover:text-white text-sm font-semibold
+                           px-5 py-2.5 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                Imprimir / PDF
+            </button>
+
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════════════
+     TABLA CASOS RECIENTES
+═══════════════════════ --}}
+<div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 overflow-hidden anim-fade-up delay-6">
+    <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h3 class="font-bold text-gray-700 dark:text-gray-200">Casos recientes (últimos 20)</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Con los filtros aplicados</p>
+        </div>
+        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600
+                     bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-300 px-3 py-1.5 rounded-full">
+            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+            {{ $r['total'] }} registros totales
+        </span>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 dark:bg-gray-900/50 text-xs">
+                <tr>
+                    <th class="px-4 py-3.5 text-left font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Código</th>
+                    <th class="px-4 py-3.5 text-left font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tipo</th>
+                    <th class="px-4 py-3.5 text-left font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</th>
+                    <th class="px-4 py-3.5 text-left font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Denunciante</th>
+                    <th class="px-4 py-3.5 text-left font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Asignado</th>
+                    <th class="px-4 py-3.5 text-left font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Región</th>
+                    <th class="px-4 py-3.5 text-left font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fecha</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60">
+                @forelse($this->ultimosCasos as $caso)
+                    @php
+                        $eBadge = [
+                            'pendiente'  => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+                            'en_proceso' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+                            'resuelto'   => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+                            'cerrado'    => 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+                        ];
+                        $tBadge = $colorTipo[$caso->tipo_violencia]['badge'] ?? 'bg-gray-50 text-gray-600';
+                    @endphp
+                    <tr class="hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-colors duration-150">
+                        <td class="px-4 py-3.5">
+                            <span class="font-mono font-bold text-indigo-700 dark:text-indigo-400 text-xs tracking-wide">
+                                {{ $caso->codigo_caso }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3.5">
+                            <span class="px-2 py-0.5 rounded-md text-xs font-semibold {{ $tBadge }}">
+                                {{ $tipoNombre[$caso->tipo_violencia] ?? $caso->tipo_violencia }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3.5">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold
+                                {{ $eBadge[$caso->estado] ?? 'bg-gray-100 text-gray-600' }}">
+                                {{ ucfirst(str_replace('_', ' ', $caso->estado)) }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3.5 text-gray-600 dark:text-gray-400 text-sm">
+                            @if($caso->es_anonimo)
+                                <span class="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400 font-medium text-xs">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Anónimo
+                                </span>
+                            @else
+                                {{ $caso->denunciante?->name ?? '—' }}
+                            @endif
+                        </td>
+                        <td class="px-4 py-3.5">
+                            @if($caso->asignado)
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
+                                    <span class="text-gray-700 dark:text-gray-300 text-sm">{{ $caso->asignado->name }}</span>
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 text-amber-500 dark:text-amber-400 font-medium text-xs">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"/>
+                                    </svg>
+                                    Sin asignar
+                                </span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3.5 text-gray-500 dark:text-gray-400 text-xs capitalize">
+                            {{ $caso->region ? ucfirst(strtolower($caso->region)) : '—' }}
+                        </td>
+                        <td class="px-4 py-3.5 text-gray-400 dark:text-gray-500 text-xs tabular-nums">
+                            {{ $caso->created_at->format('d/m/Y') }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="px-4 py-16 text-center">
+                            <div class="inline-flex flex-col items-center gap-3 text-gray-300">
+                                <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span class="text-sm text-gray-400">No hay casos con los filtros seleccionados</span>
+                            </div>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</x-filament-panels::page>
+<x-filament-panels::page>
+
+    {{-- â”€â”€ Filtros â”€â”€ --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Filtrar Reporte</h3>
+            @if($fecha_inicio || $fecha_fin || $tipo_violencia || $estado)
+                <button wire:click="limpiarFiltros"
+                        class="text-xs text-red-500 hover:text-red-700 font-semibold flex items-center gap-1 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Limpiar filtros
+                </button>
+            @endif
+        </div>
+        <form wire:submit.prevent class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {{ $this->form }}
+        </form>
+    </div>
+
+    {{-- â”€â”€ KPIs principales â”€â”€ --}}
+    @php $r = $this->resumen; @endphp
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total Casos</span>
+                <span class="text-2xl">ðŸ“‹</span>
+            </div>
+            <div class="text-3xl font-black text-indigo-700 dark:text-indigo-400">{{ $r['total'] }}</div>
+            <div class="text-xs text-gray-400 mt-1">registros con filtros aplicados</div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Tasa ResoluciÃ³n</span>
+                <span class="text-2xl">ðŸŽ¯</span>
+            </div>
+            <div class="text-3xl font-black text-green-600 dark:text-green-400">{{ $r['tasa_resolucion'] }}%</div>
+            <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+                <div class="bg-green-500 h-1.5 rounded-full" style="width: {{ $r['tasa_resolucion'] }}%"></div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Sin Asignar</span>
+                <span class="text-2xl">âš ï¸</span>
+            </div>
+            <div class="text-3xl font-black {{ $r['sin_asignar'] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400' }}">
+                {{ $r['sin_asignar'] }}
+            </div>
+            <div class="text-xs text-gray-400 mt-1">casos sin psicÃ³logo asignado</div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">AnÃ³nimos</span>
+                <span class="text-2xl">ðŸ”’</span>
+            </div>
+            <div class="text-3xl font-black text-purple-600 dark:text-purple-400">{{ $r['anonimos'] }}</div>
+            <div class="text-xs text-gray-400 mt-1">
+                {{ $r['total'] > 0 ? round(($r['anonimos'] / $r['total']) * 100, 1) : 0 }}% del total
+            </div>
+        </div>
+    </div>
+
+    {{-- â”€â”€ Estados â”€â”€ --}}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        @foreach([
+            ['label' => 'Pendientes',  'val' => $r['pendiente'],  'color' => 'amber',  'icon' => 'â³'],
+            ['label' => 'En Proceso',  'val' => $r['en_proceso'], 'color' => 'blue',   'icon' => 'ðŸ”„'],
+            ['label' => 'Resueltos',   'val' => $r['resuelto'],   'color' => 'green',  'icon' => 'âœ…'],
+            ['label' => 'Cerrados',    'val' => $r['cerrado'],    'color' => 'gray',   'icon' => 'ðŸ”’'],
+        ] as $card)
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 shadow-sm flex items-center gap-3">
+                <div class="text-2xl">{{ $card['icon'] }}</div>
+                <div>
+                    <div class="text-2xl font-black text-gray-800 dark:text-white">{{ $card['val'] }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ $card['label'] }}</div>
+                    @if($r['total'] > 0)
+                        <div class="text-xs text-gray-400">{{ round(($card['val'] / $r['total']) * 100, 1) }}%</div>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- â”€â”€ Resumen Asignaciones â”€â”€ --}}
+    @php $asig = $this->asignacionesResumen; @endphp
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6 mb-6">
+        <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+            <span class="text-lg">ðŸ—‚</span> Estado de Asignaciones (global)
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            @foreach([
+                ['label' => 'Total',       'val' => $asig['total'],       'color' => 'text-indigo-700 dark:text-indigo-400'],
+                ['label' => 'Activas',     'val' => $asig['activas'],     'color' => 'text-green-600 dark:text-green-400'],
+                ['label' => 'Finalizadas', 'val' => $asig['finalizadas'], 'color' => 'text-blue-600 dark:text-blue-400'],
+                ['label' => 'Canceladas',  'val' => $asig['canceladas'],  'color' => 'text-red-500 dark:text-red-400'],
+            ] as $a)
+                <div class="text-center py-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <div class="text-2xl font-black {{ $a['color'] }}">{{ $a['val'] }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $a['label'] }}</div>
+                    @if($asig['total'] > 0)
+                        <div class="text-xs text-gray-400">
+                            {{ round(($a['val'] / max($asig['total'], 1)) * 100, 1) }}%
+                        </div>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+        {{-- â”€â”€ Por tipo de violencia â”€â”€ --}}
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+                <span class="text-lg">ðŸ“Š</span> Casos por tipo de violencia
+            </h3>
+
+            @php
+                $tipos = $this->porTipo;
+                $maxTipo = collect($tipos)->max('total') ?: 1;
+                $colores = [
+                    'fisica'         => ['bg' => 'bg-red-500',    'light' => 'bg-red-50',    'text' => 'text-red-700'],
+                    'psicologica'    => ['bg' => 'bg-orange-500', 'light' => 'bg-orange-50', 'text' => 'text-orange-700'],
+                    'verbal'         => ['bg' => 'bg-yellow-500', 'light' => 'bg-yellow-50', 'text' => 'text-yellow-700'],
+                    'sexual'         => ['bg' => 'bg-pink-500',   'light' => 'bg-pink-50',   'text' => 'text-pink-700'],
+                    'ciberacoso'     => ['bg' => 'bg-blue-500',   'light' => 'bg-blue-50',   'text' => 'text-blue-700'],
+                    'discriminacion' => ['bg' => 'bg-purple-500', 'light' => 'bg-purple-50', 'text' => 'text-purple-700'],
+                    'otro'           => ['bg' => 'bg-gray-400',   'light' => 'bg-gray-50',   'text' => 'text-gray-600'],
+                ];
+                $tipoNombre = [
+                    'fisica' => 'FÃ­sica', 'psicologica' => 'PsicolÃ³gica', 'verbal' => 'Verbal',
+                    'sexual' => 'Sexual', 'ciberacoso' => 'Ciberacoso',
+                    'discriminacion' => 'DiscriminaciÃ³n', 'otro' => 'Otro',
+                ];
+            @endphp
+
+            @if(empty($tipos))
+                <p class="text-sm text-gray-400 text-center py-6">Sin datos para mostrar</p>
+            @else
+                <div class="space-y-3">
+                    @foreach($tipos as $t)
+                        @php
+                            $c   = $colores[$t['tipo']] ?? $colores['otro'];
+                            $pct = round(($t['total'] / $maxTipo) * 100);
+                        @endphp
+                        <div>
+                            <div class="flex items-center justify-between text-sm mb-1">
+                                <span class="font-medium text-gray-700 dark:text-gray-300">
+                                    {{ $tipoNombre[$t['tipo']] ?? $t['tipo'] }}
+                                </span>
+                                <span class="flex items-center gap-2">
+                                    <span class="text-xs text-gray-400">{{ $t['porcentaje'] }}%</span>
+                                    <span class="font-bold {{ $c['text'] }}">{{ $t['total'] }}</span>
+                                </span>
+                            </div>
+                            <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2.5">
+                                <div class="{{ $c['bg'] }} h-2.5 rounded-full transition-all duration-500"
+                                     style="width: {{ $pct }}%"></div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+        {{-- â”€â”€ Por mes â”€â”€ --}}
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+                <span class="text-lg">ðŸ“…</span> EvoluciÃ³n mensual
+            </h3>
+
+            @php
+                $meses   = $this->porMes;
+                $maxMes  = collect($meses)->max('total') ?: 1;
+            @endphp
+
+            @if(empty($meses))
+                <p class="text-sm text-gray-400 text-center py-6">Sin datos para mostrar</p>
+            @else
+                <div class="space-y-3">
+                    @foreach($meses as $m)
+                        @php $pct = round(($m['total'] / $maxMes) * 100); @endphp
+                        <div>
+                            <div class="flex items-center justify-between text-sm mb-1">
+                                <span class="font-medium text-gray-700 dark:text-gray-300 capitalize">{{ $m['mes'] }}</span>
+                                <span class="font-bold text-indigo-700 dark:text-indigo-400">{{ $m['total'] }}</span>
+                            </div>
+                            <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2.5">
+                                <div class="bg-indigo-500 h-2.5 rounded-full transition-all duration-500"
+                                     style="width: {{ $pct }}%"></div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+        {{-- â”€â”€ Carga por psicÃ³logo â”€â”€ --}}
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+                <span class="text-lg">ðŸ‘¨â€âš•ï¸</span> Carga por psicÃ³logo
+            </h3>
+
+            @php
+                $psicologos = $this->porPsicologo;
+                $maxCarga   = collect($psicologos)->max('total') ?: 1;
+            @endphp
+
+            @if(empty($psicologos))
+                <p class="text-sm text-gray-400 text-center py-6">No hay psicÃ³logos registrados</p>
+            @else
+                <div class="space-y-3">
+                    @foreach($psicologos as $p)
+                        @php $pct = round(($p['total'] / $maxCarga) * 100); @endphp
+                        <div>
+                            <div class="flex items-center justify-between text-sm mb-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 text-xs font-bold">
+                                        {{ strtoupper(substr($p['nombre'], 0, 1)) }}
+                                    </div>
+                                    <span class="font-medium text-gray-700 dark:text-gray-300 truncate max-w-[140px]">
+                                        {{ $p['nombre'] }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-semibold">{{ $p['activas'] }} activas</span>
+                                    <span class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-semibold">{{ $p['finalizadas'] }} fin.</span>
+                                </div>
+                            </div>
+                            <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+                                <div class="bg-indigo-400 h-2 rounded-full transition-all duration-500"
+                                     style="width: {{ $pct }}%"></div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+        {{-- â”€â”€ Por regiÃ³n â”€â”€ --}}
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+                <span class="text-lg">ðŸ—º</span> Casos por regiÃ³n
+            </h3>
+
+            @php
+                $regiones = $this->porRegion;
+                $maxReg   = collect($regiones)->max('total') ?: 1;
+            @endphp
+
+            @if(empty($regiones))
+                <p class="text-sm text-gray-400 text-center py-6">Sin informaciÃ³n geogrÃ¡fica registrada</p>
+            @else
+                <div class="space-y-3">
+                    @foreach($regiones as $reg)
+                        @php $pct = round(($reg['total'] / $maxReg) * 100); @endphp
+                        <div>
+                            <div class="flex items-center justify-between text-sm mb-1">
+                                <span class="font-medium text-gray-700 dark:text-gray-300 capitalize">
+                                    {{ ucfirst(strtolower($reg['region'])) }}
+                                </span>
+                                <span class="font-bold text-teal-700 dark:text-teal-400">{{ $reg['total'] }}</span>
+                            </div>
+                            <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2.5">
+                                <div class="bg-teal-500 h-2.5 rounded-full transition-all duration-500"
+                                     style="width: {{ $pct }}%"></div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+    </div>
+
+    {{-- â”€â”€ Exportar â”€â”€ --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h3 class="font-bold text-gray-700 dark:text-gray-200">Exportar datos</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                    Descarga los casos filtrados en formato CSV (compatible con Excel). Incluye regiÃ³n y escuela.
+                </p>
+            </div>
+            <div class="flex gap-3">
+                <button wire:click="exportarCsv"
+                        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700
+                               text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Descargar CSV
+                </button>
+                <button onclick="window.print()"
+                        class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600
+                               text-gray-700 dark:text-gray-200 text-sm font-semibold px-5 py-2.5 rounded-xl transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- â”€â”€ Ãšltimos 20 casos â”€â”€ --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <h3 class="font-bold text-gray-700 dark:text-gray-200">Casos recientes (Ãºltimos 20)</h3>
+            <span class="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                {{ $this->resumen['total'] }} total con filtros
+            </span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 dark:bg-gray-900 text-xs">
+                    <tr>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">CÃ³digo</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Tipo</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Denunciante</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Asignado</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">RegiÃ³n</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    @forelse($this->ultimosCasos as $caso)
+                        @php
+                            $estadoBadge = [
+                                'pendiente'  => 'bg-yellow-100 text-yellow-700',
+                                'en_proceso' => 'bg-blue-100 text-blue-700',
+                                'resuelto'   => 'bg-green-100 text-green-700',
+                                'cerrado'    => 'bg-gray-100 text-gray-600',
+                            ];
+                        @endphp
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                            <td class="px-4 py-3 font-mono font-bold text-indigo-700 dark:text-indigo-400 text-xs">
+                                {{ $caso->codigo_caso }}
+                            </td>
+                            <td class="px-4 py-3 capitalize text-gray-700 dark:text-gray-300">
+                                {{ $tipoNombre[$caso->tipo_violencia] ?? $caso->tipo_violencia }}
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold
+                                    {{ $estadoBadge[$caso->estado] ?? 'bg-gray-100 text-gray-600' }}">
+                                    {{ ucfirst(str_replace('_', ' ', $caso->estado)) }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-gray-600 dark:text-gray-400">
+                                {{ $caso->es_anonimo ? 'ðŸ”’ AnÃ³nimo' : ($caso->denunciante?->name ?? 'â€”') }}
+                            </td>
+                            <td class="px-4 py-3 text-gray-600 dark:text-gray-400">
+                                @if($caso->asignado)
+                                    <span class="flex items-center gap-1">
+                                        <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                                        {{ $caso->asignado->name }}
+                                    </span>
+                                @else
+                                    <span class="text-amber-500 font-medium text-xs">Sin asignar</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs capitalize">
+                                {{ $caso->region ? ucfirst(strtolower($caso->region)) : 'â€”' }}
+                            </td>
+                            <td class="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
+                                {{ $caso->created_at->format('d/m/Y') }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-4 py-10 text-center text-gray-400">
+                                No hay casos registrados con los filtros seleccionados.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</x-filament-panels::page>

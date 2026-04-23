@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'rol' => \App\Http\Middleware\RolMiddleware::class,
         ]);
+
+        $middleware->web(append: [
+            \App\Http\Middleware\RegistrarAcceso::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -1,0 +1,1151 @@
+
+
+<html xmlns="https://www.w3.org/1999/xhtml">
+<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="Description" content="Aplicativo de la Unidad de Estadística Educativa del Ministerio de Educación del Perú, que permite ubicar el local donde funcionan los Servicios Educativos a nivel nacional." /><title>
+	Mapa de escuelas
+</title><link rel="stylesheet" href="styles/leaflet.css" /><link rel="stylesheet" href="styles/appme.css" />
+    <script src="scripts/leaflet.js"></script>
+    <script src="scripts/esri-leaflet.js"></script>
+    <script src="scripts/esri-leaflet-vector.js"></script>
+    <script src="scripts/Bing.js"></script>
+    <script src="scripts/jquery.js"></script>
+    <script src="scripts/leaflet.draw.js"></script>
+    <script src="scripts/appcustomcontrols.js?v=639071120522971665"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+</head>
+<body>
+
+    <table border="0" cellpadding="0" cellspacing="0" class="layout">
+        <tr>
+            <td height="90" valign="bottom" align="center">
+
+                <div class="logoescale">
+                    <img src="images/logo-escale.png" height="43"></div>
+                <span class="maintitle">Mapa de Escuelas</span>
+                <div class="logominedu">
+                    <img src="images/logo_minedu.png"></div>
+
+                <div class="menubar">
+                    <div class="menubarleft">
+                        <div class="sepshome" onclick="ShowSearchPanel();">
+                            <img src="images/search.png" width="18"></div>
+                        <div class="pages" style="border-bottom: 2px solid DodgerBlue;">Servicios Educativos</div>
+                        <div class="seps">|</div>
+                        <div class="pages"><a href="mapaccpp.aspx">Centros Poblados</a></div>
+                    </div>
+                    <div class="menubarright">
+                        <span id="lblUptoDate">Actualizado: 02-04-2026</span></div>
+                </div>
+
+            </td>
+        </tr>
+        <tr>
+            <td height="100%">
+
+                <table border="0" cellpadding="0" cellspacing="0" class="layout">
+                    <tr>
+                        <td>
+
+                            <div id="search">
+
+                                <div id="searchbox">
+
+                                    <table border="0" cellspacing="0" cellpadding="0" class="layout">
+                                        <tr>
+                                            <td valign="top">
+
+                                                <!-- Opciones -->
+                                                <form onsubmit="return false;">
+                                                    <table border="0" cellspacing="0" cellpadding="0" class="options">
+                                                        <tr>
+                                                            <td>
+
+                                                                <br />
+                                                                <div class="optionstitle nohand">
+                                                                    <table>
+                                                                        <tr>
+                                                                            <td align="left">Buscar</td>
+                                                                            <td align="right">
+                                                                                <img src="images/search.png" width="18"></td>
+                                                                        </tr>
+                                                                    </table>
+                                                                </div>
+                                                                <br />
+
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="searchelement">
+                                                                <input type="text" name="txttextsearch" class="txtsearch" id="txttextsearch" maxlength="100"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="msg">Nombre del servicio, c&oacute;digo modular,
+                                                                <br>
+                                                                &oacute; c&oacute;digo de local</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>
+
+                                                                <br />
+                                                                <div onclick="showOptions('optionsubigeo');" class="optionstitle">
+                                                                    <table>
+                                                                        <tr>
+                                                                            <td align="left">&Aacute;mbito pol&iacute;tico administrativo </td>
+                                                                            <td align="right">
+                                                                                <li class="arrowoptions"></li>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </table>
+                                                                </div>
+
+                                                                <br />
+                                                                <div id="optionsubigeo" class="optionsbox">
+                                                                    <table border="0" cellspacing="0" cellpadding="0" class="options adds">
+                                                                        <tr>
+                                                                            <td>
+                                                                                <label for="seldepartamento">Departamento:</label></td>
+                                                                            <td>
+                                                                                <select name="seldepartamento" class="selsearchubigeo" id="seldepartamento" onchange="loadSelProvincia('seldepartamento'); setMapViewZoom('departamento');">
+                                                                                    <option value="">Seleccionar...</option>
+                                                                                </select></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <label for="selprovincia">Provincia:</label></td>
+                                                                            <td>
+                                                                                <select name="selprovincia" class="selsearchubigeo" id="selprovincia" onchange="loadSelDistrito('selprovincia'); setMapViewZoom('provincia');">
+                                                                                    <option value="">Seleccionar...</option>
+                                                                                </select></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <label for="seldistrito">Distrito:</label></td>
+                                                                            <td>
+                                                                                <select name="seldistrito" class="selsearchubigeo" id="seldistrito" onchange="setMapViewZoom('distrito');">
+                                                                                    <option value="">Seleccionar...</option>
+                                                                                </select></td>
+                                                                        </tr>
+                                                                    </table>
+                                                                    <br>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>
+
+                                                                <div onclick="showOptions('optionsugel');" class="optionstitle">
+                                                                    <table>
+                                                                        <tr>
+                                                                            <td align="left">Instancia de Gesti&oacute;n Educativa </td>
+                                                                            <td align="right">
+                                                                                <li class="arrowoptions"></li>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </table>
+                                                                </div>
+
+                                                                <br>
+                                                                <div id="optionsugel" class="optionsbox">
+                                                                    <div>
+                                                                        <label for="selregedu">Direcci&oacute;n Regional de Educaci&oacute;n </label>
+                                                                        <br>
+                                                                        <select name="selregedu" class="selsearchubigeo" id="selregedu" onchange="loadSelDreugel('selregedu');">
+                                                                            <option value="">Seleccionar...</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <br>
+                                                                    <div>
+                                                                        <label for="seldreugel">Unidad de Gesti&oacute;n Educativa Local </label>
+                                                                        <br>
+                                                                        <select name="seldreugel" class="selsearchubigeo" id="seldreugel">
+                                                                            <option value="">Seleccionar...</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <br>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>
+
+                                                                <div onclick="showOptions('moreoptions');" class="optionstitle">
+                                                                    <table>
+                                                                        <tr>
+                                                                            <td align="left">M&aacute;s opciones de b&uacute;squeda</td>
+                                                                            <td align="right">
+                                                                                <li class="arrowoptions"></li>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </table>
+                                                                </div>
+
+                                                                <br>
+                                                                <div id="moreoptions" class="optionsbox">
+                                                                    <div>C&oacute;digo &oacute; nombre de Centro Poblado
+                                                                        <br />
+                                                                        <input type="text" name="txtcodcp" id="txtcodcp" maxlength="100" class="selsearchubigeo"></div>
+                                                                    <br>
+                                                                    Nivel/Modalidad<br>
+                                                                    <div class="controlnivel">
+                                                                        <table border="0" cellspacing="0" cellpadding="0">
+                                                                            <tr>
+                                                                                <td class="msg">Educaci&oacute;n B&aacute;sica Regular</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="EBR_NE" value="A5" /><label for="EBR" title="Inicial no escolarizado">Inicial no escolarizado</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="EBR_I" value="A1,A2,A3" /><label for="EBR" title="Inicial">Inicial</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="EBR_P" value="B0" /><label for="EBR" title="Primaria">Primaria</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="EBR_S" value="F0" /><label for="EBR" title="Secundaria">Secundaria</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="msg">Educaci&oacute;n B&aacute;sica Alternativa</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="EBA_I" value="D1" /><label for="EBA" title="Inicial e Intermedio">Inicial e Intermedio</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="EBA_A" value="D2" /><label for="EBA" title="Avanzado">Avanzado</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="msg">Educaci&oacute;n B&aacute;sica Especial</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="EBE_P1" value="E0" /><label for="EBE" title="PRITE">PRITE</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="EBE_I" value="E1" /><label for="EBE" title="Inicial">Inicial</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="EBE_P2" value="E2" /><label for="EBE" title="Primaria">Primaria</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="msg">Educaci&oacute;n Superior no Universitaria</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="ESU_K" value="K0" /><label for="ESU" title="Superior Pedag&oacute;gica">Superior Pedag&oacute;gica</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="ESU_T" value="T0" /><label for="ESU" title="Superior Tecnol&oacute;gica">Superior Tecnol&oacute;gica</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="ESU_M" value="M0" /><label for="ESU" title="Superior Formaci&oacute;n Artística">Superior Formaci&oacute;n Art&iacute;stica</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="ESU_S" value="S0" /><label for="ESU" title="Escuela Superior Tecnol&oacute;gica">Escuela Superior Tecnol&oacute;gica</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="ESU_P" value="P0" /><label for="ESU" title="Escuela Superior Pedag&oacute;gica">Escuela Superior Pedag&oacute;gica</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="msg">Educaci&oacute;n T&eacute;cnico Productiva</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="ETP" value="L0" /><label for="ETP" title="Educaci&oacute;n T&eacute;cnico Productiva - CETPRO">Educaci&oacute;n T&eacute;cnico Productiva - CETPRO</label></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="msg">Instancia de Apoyo</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td nowrap>
+                                                                                    <input type="checkbox" name="ctrnivel" id="IA" value="a" /><label for="ETP" title="Instancia de Apoyo">Instancia de Apoyo</label></td>
+                                                                            </tr>
+                                                                        </table>
+                                                                    </div>
+                                                                    <br>
+                                                                    <div>
+                                                                        <label for="selgestiondependencia">Gesti&oacute;n/Dependencia </label>
+                                                                        <br>
+                                                                        <select name="selgestiondependencia" class="selsearchubigeo" id="selgesdep">
+                                                                            <option value="">Seleccionar...</option>
+                                                                            <option value="A1,A2,A3,A4">Público</option>
+                                                                            <option value="A1">&nbsp;&nbsp;&nbsp;Sector Educación</option>
+                                                                            <option value="A2">&nbsp;&nbsp;&nbsp;Otro sector público (FF.AA.)</option>
+                                                                            <option value="A3">&nbsp;&nbsp;&nbsp;Municipalidad</option>
+                                                                            <option value="A4">&nbsp;&nbsp;&nbsp;Entidad en convenio con Sector Educación</option>
+                                                                            <option value="B1,B2,B3,B4,B5,B6">Privado</option>
+                                                                            <option value="B1">&nbsp;&nbsp;&nbsp;Cooperativo</option>
+                                                                            <option value="B2">&nbsp;&nbsp;&nbsp;Comunidad o asociación religiosa</option>
+                                                                            <option value="B3">&nbsp;&nbsp;&nbsp;Comunidad</option>
+                                                                            <option value="B4">&nbsp;&nbsp;&nbsp;Particular</option>
+                                                                            <option value="B5">&nbsp;&nbsp;&nbsp;Empresa (Fiscalizado)</option>
+                                                                            <option value="B6">&nbsp;&nbsp;&nbsp;Asociación civil / Institución benéfica</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <br />
+                                                                    <!--<div><label for="chkprogramas">Incluir no escolarizado: </label><input type="checkbox" name="chkprogramas" id="chkprogramas"></div>-->
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        <!-- -->
+                                                        <tr>
+                                                            <td>
+                                                                <div onclick="showOptions('leyenda');" class="optionstitle">
+                                                                    <table>
+                                                                        <tr>
+                                                                            <td align="left">leyenda</td>
+                                                                            <td align="right">
+                                                                                <li class="arrowoptions"></li>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </table>
+                                                                </div>
+                                                                <div id="leyenda" class="optionsbox2">
+                                                                    <div class="Leyenda">
+                                                                        <img src="images/leyenda.jpg" width="202" height="240">
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                        
+                                                       
+                                                        <!-- -->
+                                                        
+                                                        <tr>
+                                                            <td>
+                                                                <br>
+                                                                <div class="buttonsearchbox">
+                                                                    <button onclick="javascript:btnSearch();" class="buttonsearch">Buscar</button>&nbsp;&nbsp;
+                                                                    <button onclick="javascript:btnClear();" class="buttonsearch">Limpiar</button></div>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </form>
+                                                <!-- -->
+
+                                                <div id="data-departamento" class="datafield"></div>
+                                                <div id="data-provincia" class="datafield"></div>
+                                                <div id="data-distrito" class="datafield"></div>
+                                                <div id="data-dreugel" class="datafield"></div>
+
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td valign="bottom">
+
+                                                <div id="arrowupbox" onclick="javascript:showResults();" title="Mostrar panel de resultados">
+                                                    <i id="arrowup" class="arrowup"></i>
+                                                </div>
+
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                </div>
+                                <div id="barleft"></div>
+                            </div>
+
+                        </td>
+                        <td width="100%">
+
+                            <!-- Elemento para el mapa -->
+                            <div id="mapid"></div>
+
+                        </td>
+                    </tr>
+                </table>
+
+            </td>
+        </tr>
+        <tr>
+            <td>
+
+                <div id="results">
+
+                    <div id="resultsbox" onscroll="fixHeader(this);">
+
+                        <div id="resultsloader"></div>
+
+                        <div id="resultsdatagrid">
+                            <form method="post" action="" id="form1">
+<div class="aspNetHidden">
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwUKMTcyMzI0MzQ3Mw9kFgQCAw8PFgIeBFRleHQFF0FjdHVhbGl6YWRvOiAwMi0wNC0yMDI2ZGQCBQ9kFgICBQ9kFgJmD2QWAgIXDzwrABECARAWABYAFgAMFCsAAGQYAgUeX19Db250cm9sc1JlcXVpcmVQb3N0QmFja0tleV9fFgEFC2J0bkV4cG9ydGFyBQ1ndndEYXRhUGFkcm9uD2dkhV9VLhZ28FeLpzyxQm338dTDnW6X3fxRYqnpixUuMb0=" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['form1'];
+if (!theForm) {
+    theForm = document.form1;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/mapaeducativo/WebResource.axd?d=Nt40-sB-ZBrOSBkrKpCR8zOm9If_lWubtLyqTzJg_RugwqOmsZXxp0CUq0LNhucJLAZQorP_wZjHw79tgsxvwmVIM2SFl3jZKWbhlGvaiEQ1&amp;t=635369962285126825" type="text/javascript"></script>
+
+
+<script src="/mapaeducativo/ScriptResource.axd?d=epqgqkxbdrj-K_g9ea-j7fxjUvm-XX7hV0dUMUuItiQk93Lai5be09qcspJ4-FN6-lQZrMIgK42z3xReEQfpCX0WHa6pvBpMxYvbMwUVmHi7bq_fgOcHK2A-ayqfZNFZbWWkpmQGBxF3btMAG4_MkouASnqLlB78zn2nulqpFek1&amp;t=ffffffffb53e74b8" type="text/javascript"></script>
+<script src="/mapaeducativo/ScriptResource.axd?d=tbXMlWRBwM5K3Q5b5GeLxIKjUnsVkPlyR70Uum_aw5s4-tiqFI6GYUDgU-uFUI8y0kHBV1JV4TiUCTd-3o8XQN4UXSGS3R8A_4WQ_AL5GB8Q8n1bFWefvuIL0Jb3mHgR1Hsq7yhqDTOu2IgQ_InyZKsv3DR17JBsanGuJEHx6eMcx-BoQOs28Jn8SqscgNsY0&amp;t=ffffffffb53e74b8" type="text/javascript"></script>
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="2AD55225" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="/wEdAAzaryKvvvfocXaiJUhQ9Y0/60z594LnSzU4S6PQAbT3roR9i95EWCb7Jv7FRNi6mIELiW9sy5BciHT+0tmnwvv+N4dawZqY+bECPlAPkOFwluhI9+Usvfte6ZgLciuqhxP3s3iOfcwCqsrIfmiMpAGTLYSp6XkfNJ1FqOTZ8+KKXeozcqk7eP9nst8IdQ1Hej+V5YBtm+CWLjh0zYVGBs6LQbyl7O8xROPfSsnmtzPY/p7M7wh4H9LE0LjDrpBufBToWT+eIGHxnQZH7dZeIksqfX/YV8w8+ArTGXq+iAk6+Q==" />
+</div>
+
+                                <input type="image" name="btnExportar" id="btnExportar" src="images/ms-excel.png" style="width:22px;" />
+
+                                <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('scriptManagerResults', 'form1', ['tupdatePanelResults','updatePanelResults'], [], [], 90, '');
+//]]>
+</script>
+
+
+                                <div id="updatePanelResults">
+	
+                                        <input type="hidden" name="hdTextSearch" id="hdTextSearch" />
+                                        <input type="hidden" name="hdUbigeo" id="hdUbigeo" />
+                                        <input type="hidden" name="hdDreugel" id="hdDreugel" />
+                                        <input type="hidden" name="hdCodCP" id="hdCodCP" />
+                                        <input type="hidden" name="hdNivel" id="hdNivel" />
+                                        <input type="hidden" name="hdGestion" id="hdGestion" />
+                                        <input type="hidden" name="hdProgramas" id="hdProgramas" />
+                                        <!-- Agregado para marker-->
+                                        <input type="hidden" name="hdCodCPMapa" id="hdCodCPMapa" />
+                                        <input type="submit" name="btnClickMapa" value="" id="btnClickMapa" style="display:none" />
+                                        <!-- FIN-->
+                                        <input type="submit" name="btnGetData" value="Button" id="btnGetData" />
+
+                                        <table width="100%" border="0" class="fixedheader resultstext">
+                                            <tr>
+                                                <td width="100%">
+                                                    <span id="lblNumResults"></span></td>
+                                                <td>
+                                                    <div class="exportbutton" onclick="javascript:exportarExcel();" title="Exportar a Excel">
+                                                        <div class="exportbuttonlabel">Exportar</div>
+                                                        <div class="exportbuttonlogo">
+                                                            <img src="images/ms-excel.png" width="22"></div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div id="arrowdownbox" onclick="javascript:hideResults();" title="Ocultar panel de resultados">
+                                                        <i id="arrowdown" class="arrowdown"></i>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <div>
+
+	</div>
+                                    
+</div>
+
+                            </form>
+                        </div>
+
+                    </div>
+                    <div id="barbottom"></div>
+                </div>
+
+            </td>
+        </tr>
+    </table>
+
+    <div id="winuseterms" class="modalwindow">
+
+        <div class="modalbox">
+            <div class="headmodalbox">SOBRE EL USO DEL MAPA</div>
+            <div class="bodymodalbox">
+                Esta es una herramienta web que permite localizar los servicios educativos que cumplen con los criterios de búsqueda ingresados por el usuario. Los datos de ubicación de los servicios están sustentados en los datos registrados por las Direcciones Regionales de Educación (DRE) y las Unidades de Gestión Educativa Local (UGEL) en el Padrón de Instituciones Educativas.<br>
+                <br>
+                La capa de centros poblados es una compilación de datos de varias entidades y presentan diferentes niveles de exactitud y precisión. La ubicación de los centros poblados no está garantizada, a excepción de aquellos  georreferenciados por el Ministerio de Educación (Fuente SIGMED).<br>
+                <br>
+                Los límites distritales, provinciales y departamentales visualizados en los Mapas, corresponden a los límites censales proporcionados por el Instituto Nacional de Estadística e Informática, utilizados como referencia en ausencia de límites saneados disponibles. Por tanto, no representan pertenencia de un centro poblado o servicio educativo a una jurisdicción político-administrativa.<br>
+                <br>
+                La información contenida en este aplicativo es actualizada y verificada continuamente. Para cualquier consulta u observación, contactarnos al correo: <b>analisisterritorial@minedu.gob.pe</b>.<br>
+                <br>
+                Para continuar es preciso que usted haga clic en el botón "Aceptar".<br>
+            </div>
+            <div class="footmodalbox">
+                <button onclick="AcceptUseTerms();">Aceptar</button></div>
+        </div>
+
+    </div>
+
+    <script>
+
+        //var BaseEsriImagery = L.esri.basemapLayer('Imagery');
+        //var BaseEsriImageryClarity =  L.esri.basemapLayer('ImageryClarity');
+        //var LayerEsriImageryLabels = L.esri.basemapLayer('ImageryLabels');
+        var BaseEsriImagery = L.esri.Vector.vectorBasemapLayer('ArcGIS:Imagery:Standard', { apiKey: apiEsriBase });
+        //var BaseBingAerial = new L.BingLayer( apiBingBase ,{imagerySet:'Aerial'});
+        var BaseOpenStreet = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' });	//L.esri.basemapLayer('Streets'); 
+        //var BaseEsriWorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community' });
+
+        var LayerCountryLimits = L.esri.dynamicMapLayer({ url: 'https://sigmed.minedu.gob.pe/medgis/rest/services/carto_base/lim_pol/MapServer', minZoom: 5, opacity: 0.9 });
+    
+        var LayerCPSchools = L.esri.dynamicMapLayer({ url: 'https://sigmed.minedu.gob.pe/medgis/rest/services/carto_base/cp/MapServer', minZoom: 6, opacity: 0.9 });
+
+        var LayerCP = L.esri.dynamicMapLayer({ url: 'https://sigmed.minedu.gob.pe/medgis/rest/services/carto_base/CCPP/MapServer', minZoom: 6, opacity: 0.9 });
+        var LayerSSEE = L.esri.dynamicMapLayer({ url: 'https://sigmed.minedu.gob.pe/medgis/rest/services/carto_base/SSEE/MapServer', minZoom: 5, opacity: 0.9 });
+        //var LayerOrdenamiento = L.esri.dynamicMapLayer({ url: 'https://sigmed.minedu.gob.pe/medgis/rest/services/carto_base/oe/MapServer', minZoom: 6, opacity: 0.9 });
+
+        var mymap = L.map('mapid', {
+            center: [-9.32, -75.15],
+            minZoom: 5,
+            maxZoom: 18,
+            zoom: 6,
+            zoomControl: false,
+            layers: [BaseEsriImagery, LayerCountryLimits,LayerCPSchools]
+        });
+
+        var baseMaps = {
+            " Imagen Satelital (ESRI)": BaseEsriImagery,
+            //" Imagen Satelital (Bing) ": BaseBingAerial,
+            " Calles (OpenStreetMap) ": BaseOpenStreet
+        };
+
+        var overlayMaps = {
+            "Limites censales": LayerCountryLimits,
+            "CP - SSEE": LayerCPSchools,
+            "Centros Poblados": LayerCP,
+            "Servicios Educativos":LayerSSEE
+            //"Ordenamiento_SSEE": LayerOrdenamiento
+        };
+
+        var controlLayers = L.control.layers(baseMaps, overlayMaps).addTo(mymap);
+        
+  
+
+        //VENTANA DE SELECCIÓN DE CAPAS
+        //  L.control.layers(baseMaps,overlayMaps).addTo(mymap);
+
+        L.control.zoom({
+            position: 'topright'
+        }).addTo(mymap);
+
+        //L.control.scale({ metric: true, imperial: false }).addTo(mymap);
+        /*
+        L.Control.Legend = L.Control.extend({
+            onAdd: function (map) {
+                var el = L.DomUtil.create('div', 'legend');
+                el.innerHTML = "<div>Leyenda</div><img src=\'images/leyenda.jpg\' width=180>";
+                return el;
+            },
+            onRemove: function (map) { }
+        });
+
+        L.control.Legend = function (opts) {
+            return new L.Control.Legend(opts);
+        }
+
+        L.control.Legend({
+            position: 'bottomleft'
+        }).addTo(mymap);
+        */
+
+        var layerMarkers = L.featureGroup().addTo(mymap);
+        var arrMarkersId = [];
+        var arrMarkersCodMod = [];
+
+        layerMarkers.on('popupopen', function (e) {
+
+            var intMarkerId = e.layer._leaflet_id;
+            //group.eachLayer(function (layer) {
+            //    layer.on('click', function () {
+            //        alert(this._leaflet_id)
+            //    });
+            //});
+
+            var arrLength = arrMarkersId.length;
+            var strMarkerIndex;
+
+            for (i = 0; i < arrLength; i++) {
+                if (arrMarkersId[i] == intMarkerId) {
+                    strMarkerIndex = i;
+                    break;
+                }
+            }
+
+            var strMarkerCodMod = arrMarkersCodMod[strMarkerIndex];
+            $.getJSON('https://sigmed.minedu.gob.pe/servicios/rest/service/restsig.svc/padron?codgeo=&codugel=&codmod=' + strMarkerCodMod.substring(0, strMarkerCodMod.length - 1) + '&anexo=' + strMarkerCodMod.substring(strMarkerCodMod.length - 1) + '&nombreie=&codlocal=&direccion=&cenpob=&localidad=&nivmod=&gesdep=&codcp=&estado=&ubicados=', { get_param: 'value' }, function (response) {
+                var jsData = $.parseJSON(response);
+                var strPopup = "<table class='textpopup'>";
+                strPopup += "<tr><td><b>Nombre:</b></td><td nowrap>" + jsData.Rows[0].NOMBRE_ESCUELA + "</td></tr>";
+                strPopup += "<tr><td><b>C&oacute;digo:</b></td><td nowrap>" + jsData.Rows[0].CODIGO_MODULAR + "</td></tr>";
+                strPopup += "<tr><td><b>Nivel:</b></td><td nowrap>" + jsData.Rows[0].NIVEL_MODALIDAD + "</td></tr>";
+                //strPopup += "<tr><td><b>Docentes:</b></td><td>" + jsData.Rows[0].TOTAL_DOCENTES + "</td></tr>";
+                //strPopup += "<tr><td><b>Alumnos:</b></td><td>" + jsData.Rows[0].TOTAL_ALUMNOS + "</td></tr>";
+                strPopup += "</table>";
+                e.layer.setPopupContent(strPopup);
+            });
+
+        });
+
+    </script>
+    <script src="scripts/mapcustomcontrols.js"> </script>
+    <script>
+
+        function AcceptUseTerms() {
+            $("#winuseterms").hide();
+        }
+
+        function btnSearch() {
+
+            var paramUbigeoValue = '';
+            var paramDreugelValue = '';
+            var paramNivel = '';
+
+            var selDepartamentoValue = $("#seldepartamento").val();
+            var selProvinciaValue = $("#selprovincia").val();
+            var selDistritoValue = $("#seldistrito").val();
+            var selRegeduValue = $("#selregedu").val();
+            var selDreugelValue = $("#seldreugel").val();
+
+            if (selDistritoValue != '') {
+                paramUbigeoValue = selDistritoValue;
+            }
+            else {
+                if (selProvinciaValue != '') {
+                    paramUbigeoValue = selProvinciaValue;
+                }
+                else {
+                    if (selDepartamentoValue != '') {
+                        paramUbigeoValue = selDepartamentoValue;
+                    }
+                }
+            }
+
+            if (selDreugelValue != '') {
+                paramDreugelValue = selDreugelValue;
+            }
+            else {
+                if (selRegeduValue != '') {
+                    paramDreugelValue = selRegeduValue;
+                }
+            }
+
+            $("input[name='ctrnivel']").each(function () {
+                if (this.checked) {
+                    paramNivel += this.value + ',';
+                }
+            });
+
+            if (paramNivel != '') {
+                paramNivel = paramNivel.substring(0, paramNivel.length - 1);
+            }
+
+            if ($('.sepshome').is(':visible')) {
+                $('#search').hide();
+            }
+
+            $("#hdTextSearch").val($("#txttextsearch").val());
+            $("#hdUbigeo").val(paramUbigeoValue);
+            $("#hdDreugel").val(paramDreugelValue);
+            $("#hdCodCP").val($("#txtcodcp").val());
+            $("#hdNivel").val(paramNivel);
+            $("#hdGestion").val($("#selgesdep").val());
+            if ($("#chkprogramas").prop('checked') == false) { $("#hdProgramas").val('A5'); } else { $("#hdProgramas").val(''); }
+            $("#btnGetData").trigger("click");
+            $('#resultsdatagrid').hide();
+            $('#resultsloader').show();
+            limpiarListaMarker();
+            arrMarkersId.length = 0;
+            arrMarkersCodMod.length = 0;
+            if ($('#resultsbox').is(':hidden')) {
+                //$('#resultsbox').slideDown(function () { mymap.invalidateSize(); });
+                $('#arrowupbox').hide();
+                $('#resultsbox').show();
+                mymap.invalidateSize();
+            }
+
+        }
+
+        function btnClear() {
+
+            $("#txttextsearch").val('');
+
+            $("#seldepartamento").val('');
+            $("#selprovincia").val('');
+            $("#seldistrito").val('');
+
+            $("#selregedu").val('');
+            $("#seldreugel").val('');
+
+            $("#txtcodcp").val('');
+            $("input[name='ctrnivel']").each(function () {
+                this.checked = false;
+            });
+
+
+            $("#selgesdep").val('');
+            $("#chkprogramas").prop('checked', false);
+
+            limpiarListaMarker();
+            arrMarkersId.length = 0;
+            arrMarkersCodMod.length = 0;
+            $('#resultsbox').hide();
+            mymap.invalidateSize();
+
+        }
+
+        function actualizaListaMarkersPage(thisElement) {
+
+            var arrCheckElements = $('.chkviewmap');
+            if (thisElement.checked) {
+
+                arrCheckElements.each(function () {
+                    if (!this.checked) {
+                        var strLatLng = $(this).val();
+                        var arrLatLng = strLatLng.split('|');
+
+                        if (arrLatLng[1] != '0' && arrLatLng[2] != '0') {
+                            var pLatLngArr = L.latLng(arrLatLng[1], arrLatLng[2]);
+                            var addmarkerArr = L.marker(pLatLngArr).bindPopup(' ... ');    //arrLatLng[3]
+                            layerMarkers.addLayer(addmarkerArr);
+                            //if (arrCheckElements.length == 1) { addmarkerArr.openPopup() }
+                            arrMarkersId.push(layerMarkers.getLayerId(addmarkerArr));
+                            arrMarkersCodMod.push(arrLatLng[0]);
+                            $(this).prop('checked', true);
+                            if (arrCheckElements.length == 1) { addmarkerArr.openPopup() }
+                        }
+                        else
+                            $(this).prop('disabled', true);
+                    }
+                });
+                mymap.fitBounds(layerMarkers.getBounds(), { paddingTopLeft: L.point(0, 25) });
+            }
+            else {
+                arrCheckElements.each(function () {
+                    if (this.checked) {
+                        var strLatLng = $(this).val();
+                        var arrLatLng = strLatLng.split('|');
+
+                        var arrLength = arrMarkersId.length;
+                        var removeMarkerIndex;
+                        if (arrLatLng[1] != '0' && arrLatLng[2] != '0') {
+                            for (i = 0; i < arrLength; i++) {
+                                if (arrMarkersCodMod[i] == arrLatLng[0]) {
+                                    removeMarkerIndex = i;
+                                    break;
+                                }
+                            }
+                            layerMarkers.removeLayer(arrMarkersId[removeMarkerIndex]);
+                            arrMarkersId.splice(removeMarkerIndex, 1);
+                            arrMarkersCodMod.splice(removeMarkerIndex, 1);
+                            $(this).prop('checked', false);
+                        }
+                    }
+                });
+            }
+        }
+
+        function actualizaCheckboxStatus() {
+
+            var arrCheckElements = $('.chkviewmap');
+            var intCountElementsStatus = 0;
+
+            arrCheckElements.each(function () {
+
+                var strLatLng = $(this).val();
+                var arrLatLng = strLatLng.split('|');
+
+                var arrLength = arrMarkersId.length;
+                if (arrLatLng[1] != '0' && arrLatLng[2] != '0') {
+                    for (i = 0; i < arrLength; i++) {
+                        if (arrMarkersCodMod[i] == arrLatLng[0]) {
+                            $(this).prop('checked', true);
+                            intCountElementsStatus++;
+                            break;
+                        }
+                    }
+
+                }
+                else
+                    $(this).prop('disabled', true);
+            });
+
+            if (intCountElementsStatus == arrCheckElements.length)
+                $('#chkviewmapall').prop('checked', true);
+        }
+
+        function actualizaListaMarkers(thisElement) {
+
+            var strLatLng = thisElement.value;
+            var arrLatLng = strLatLng.split('|');
+
+            if (arrLatLng[1] != '0' && arrLatLng[2] != '0') {
+
+                if (thisElement.checked) {
+                    var pLatLng = L.latLng(arrLatLng[1], arrLatLng[2]);
+                    var addmarker = L.marker(pLatLng).bindPopup(' ... ');
+                    layerMarkers.addLayer(addmarker);
+                    //if (mymap.getBounds().contains(layerMarkers.getBounds()) == false) {
+                    mymap.fitBounds(layerMarkers.getBounds(), { paddingTopLeft: L.point(0, 25) });
+                    //addmarker.bindPopup(arrLatLng[3]).openPopup();
+                    arrMarkersId.push(layerMarkers.getLayerId(addmarker));
+                    arrMarkersCodMod.push(arrLatLng[0]);
+                    addmarker.openPopup();
+                    //layerMarkers.openPopup();
+                    //}
+                }
+                else {
+                    var arrLength = arrMarkersId.length;
+                    var removeMarkerIndex;
+
+                    for (i = 0; i < arrLength; i++) {
+                        if (arrMarkersCodMod[i] == arrLatLng[0]) {
+                            removeMarkerIndex = i;
+                            break;
+                        }
+                    }
+                    layerMarkers.removeLayer(arrMarkersId[removeMarkerIndex]);
+                    arrMarkersId.splice(removeMarkerIndex, 1);
+                    arrMarkersCodMod.splice(removeMarkerIndex, 1);
+
+                    $('#chkviewmapall').prop('checked', false);
+                }
+            }
+            else {
+                $(thisElement).prop('checked', false);
+                $(thisElement).prop('disabled', true);
+            }
+        }
+
+        function limpiarListaMarker() {
+            layerMarkers.clearLayers();
+        }
+
+        function showOptions(container) {
+            $('#' + container).slideToggle();
+        }
+
+        function showResults() {
+            //$('#resultsbox').slideDown(function () { mymap.invalidateSize(); });
+            $('#resultsbox').show();
+            $('#arrowupbox').hide();
+            mymap.invalidateSize();
+        }
+
+        function hideResults() {
+            $('#resultsbox').hide();
+            $('#arrowupbox').show();
+            mymap.invalidateSize();
+        }
+
+        function showDataGrid() {
+            $('#resultsdatagrid').show();
+            $('#resultsloader').hide();
+        }
+
+        function ShowSearchPanel() {
+            $('#search').toggle();
+        }
+
+        function fixHeader(thisElement) {
+            var arrHeaderElements = $('.fixedheader');
+            arrHeaderElements.css("top", thisElement.scrollTop + "px");
+        }
+
+        function exportarExcel() {
+            $('#btnExportar').trigger('click');
+        }
+
+        function VerDetalle(CodModular, Anexo) {
+
+            // Definir la clave secreta y el vector de inicialización (IV)
+            var secretKey = CryptoJS.enc.Utf8.parse("0123456789abcdef");
+            var iv = CryptoJS.enc.Utf8.parse("abcdefghijklmnop");
+
+            // Definir la URL base
+            var baseUrl = 'https://escale.minedu.gob.pe/PadronWeb/info/ce';
+
+            // Cifrar los parámetros
+            var encryptedCodMod = CryptoJS.AES.encrypt(CodModular, secretKey, { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 }).toString();
+            var encryptedAnexo = CryptoJS.AES.encrypt(Anexo, secretKey, { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 }).toString();
+
+            // Convertir el cifrado en base64 a hexadecimal
+            var encryptedCodModHex = CryptoJS.enc.Hex.stringify(CryptoJS.enc.Base64.parse(encryptedCodMod));
+            var encryptedAnexoHex = CryptoJS.enc.Hex.stringify(CryptoJS.enc.Base64.parse(encryptedAnexo));
+
+            // Construir la URL cifrada
+            var url = baseUrl + "?cod_mod=" + encodeURIComponent(encryptedCodModHex) + "&anexo=" + encodeURIComponent(encryptedAnexoHex);
+
+            // Eliminar cualquier parte no deseada de la URL si es necesario
+            var caracterComa = url.indexOf(";");
+            var caracterInfo = url.indexOf("info");
+
+            if (caracterComa != -1) {
+                var cadenaExtraida = url.substring(caracterComa, caracterInfo);
+                url = url.replace(cadenaExtraida, "");
+            }
+
+            // Abrir la nueva ventana con la URL cifrada
+            window.open(url, '_blank');
+        }
+    </script>
+
+    <script>
+
+        $(document).ready(function () {
+
+            if (document.referrer.indexOf(window.location.host) == -1 && !$('.sepshome').is(':visible')) {
+                $("#winuseterms").show();
+            }
+
+            loadSelDepartamento();
+            loadReziseBars();
+
+            document.getElementById("results").style.width = window.innerWidth - 3;
+            $(window).resize(function () {
+                document.getElementById("results").style.width = window.innerWidth - 3;
+            });
+
+        });
+
+        function loadSelDepartamento() {
+
+            $.getJSON('https://sigmed.minedu.gob.pe/servicios/rest/service/restsig.svc/regiones?', { get_param: 'value' }, function (response) {
+                $("#data-departamento").text(response);
+                loadSelOptions('departamento', 'departamento', 'CODREGION', 'NOMBRE');
+                loadSelRegedu();
+                loadSelProvincia('seldepartamento');
+            });
+
+        }
+
+        function loadSelProvincia(idElement) {
+
+            var valRequest = $("#" + idElement).val();
+
+            if (valRequest != '') {
+                $.getJSON('https://sigmed.minedu.gob.pe/servicios/rest/service/restsig.svc/provincias?codregion=' + valRequest, { get_param: 'value' }, function (response) { //alert(response);
+                    $("#data-provincia").text(response);
+                    loadSelOptions('provincia', 'provincia', 'CODPROVINCIA', 'NOMBRE');
+                    loadSelDistrito('selprovincia');
+                });
+            }
+            else {
+                $("#data-provincia").text('');
+                loadSelOptions('provincia', 'provincia', 'CODPROVINCIA', 'NOMBRE');
+                loadSelDistrito('selprovincia');
+            }
+
+        }
+
+        function loadSelDistrito(idElement) {
+
+            var valRequest = $("#" + idElement).val();
+
+            if (valRequest != '') {
+                $.getJSON('https://sigmed.minedu.gob.pe/servicios/rest/service/restsig.svc/distritos?codprovincia=' + valRequest, { get_param: 'value' }, function (response) { //alert(response);
+                    $("#data-distrito").text(response);
+                    loadSelOptions('distrito', 'distrito', 'CODUBIGEO', 'NOMBRE');
+                });
+            }
+            else {
+                $("#data-distrito").text('');
+                loadSelOptions('distrito', 'distrito', 'CODUBIGEO', 'NOMBRE');
+            }
+
+        }
+
+        function loadSelRegedu() {
+
+            loadSelOptions('regedu', 'departamento', 'CODREGION', 'NOMBRE');
+            loadSelDreugel('selregedu');
+
+        }
+
+        function loadSelDreugel(idElement) {
+
+            var valRequest = $("#" + idElement).val();
+
+            if (valRequest != '') {
+                $.getJSON('https://sigmed.minedu.gob.pe/servicios/rest/service/restsig.svc/ugel?codregion=' + valRequest, { get_param: 'value' }, function (response) { //alert(response);
+                    $("#data-dreugel").text(response);
+                    loadSelOptions('dreugel', 'dreugel', 'CODUGEL', 'NOMBRE');
+                });
+            }
+            else {
+                $("#data-dreugel").text('');
+                loadSelOptions('dreugel', 'dreugel', 'CODUGEL', 'NOMBRE');
+            }
+
+        }
+
+        function loadSelOptions(idElement, idData, nameValAttribute, nameTextAttribute) {
+
+            var data = $("#data-" + idData).text();
+
+            $("#sel" + idElement).empty();
+            $("#sel" + idElement).append("<option value=''>Seleccionar...</option>");
+
+            if (data != '') {
+
+                var selOptions = $.parseJSON(data);
+ 		selOptions.Rows.sort(function (a, b) {
+     			return a[nameValAttribute].localeCompare(b[nameValAttribute]);
+ 		});
+                if (idElement != 'dreugel') {
+                    $.each(selOptions.Rows, function (index, element) {
+                        $("#sel" + idElement).append("<option value='" + element[nameValAttribute] + "'>" + element[nameValAttribute].substring(element[nameValAttribute].length - 2) + '. ' + element[nameTextAttribute] + "</option>");
+                    });
+                }
+                else {
+                    $.each(selOptions.Rows, function (index, element) {
+                        $("#sel" + idElement).append("<option value='" + element[nameValAttribute] + "'>" + element[nameValAttribute].substring(element[nameValAttribute].length - 4) + '. ' + element[nameTextAttribute] + "</option>");
+                    });
+                }
+            }
+
+        }
+
+        function setMapViewZoom(idElement) {
+
+            var valRequest = $("#sel" + idElement).val();
+            var data = $("#data-" + idElement).text();
+            if (idElement == 'departamento') {
+                idElement = 'region';
+            }
+            else {
+                if (idElement == 'distrito') {
+                    idElement = 'ubigeo';
+                }
+            }
+            var nameValAttribute = 'COD' + idElement.toUpperCase();
+
+            if (valRequest != '') {
+                if (data != '') {
+
+                    var selOptions = $.parseJSON(data);
+                    $.each(selOptions.Rows, function (index, element) {
+                        if (element[nameValAttribute] == valRequest) {
+                            setViewZoom(element.LATITUD, element.LONGITUD, element.ZOOM);
+                        }
+                    });
+                }
+            }
+
+        }
+
+        function setViewZoom(Lat, Lng, Zm) {
+            var pLatLng = L.latLng(Lat, Lng);
+            mymap.setView(pLatLng, Zm);
+        }
+
+        function setUbigeoMapView() {
+            var paramSearchValue = '';
+            var data = '';
+            var nameValAttribute = '';
+
+            var selDepartamentoValue = $("#seldepartamento").val();
+            var selProvinciaValue = $("#selprovincia").val();
+            var selDistritoValue = $("#seldistrito").val();
+
+            if (selDistritoValue != '') {
+                paramSearchValue = selDistritoValue;
+                data = $("#data-distrito").text();
+                nameValAttribute = 'CODUBIGEO';
+            }
+            else {
+                if (selProvinciaValue != '') {
+                    paramSearchValue = selProvinciaValue;
+                    data = $("#data-provincia").text();
+                    nameValAttribute = 'CODPROVINCIA';
+                }
+                else {
+                    if (selDepartamentoValue != '') {
+                        paramSearchValue = selDepartamentoValue;
+                        data = $("#data-departamento").text();
+                        nameValAttribute = 'CODREGION';
+                    }
+                }
+            }
+
+            if (paramSearchValue != '') {
+                if (data != '') {
+
+                    var selOptions = $.parseJSON(data);
+                    $.each(selOptions.Rows, function (index, element) {
+                        if (element[nameValAttribute] == paramSearchValue) {
+                            var pLatLng = L.latLng(element.LATITUD, element.LONGITUD);
+                            mymap.setView(pLatLng, element.ZOOM);
+                            return;
+                        }
+                    });
+                }
+            }
+        }
+
+        function loadReziseBars() {
+            document.getElementById("barleft").addEventListener("mousedown", initBarLeft, false);
+            document.getElementById("barbottom").addEventListener("mousedown", initBarBottom, false);
+        }
+
+        function initBarLeft(e) {
+            element = document.getElementById("search");
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = parseInt(document.defaultView.getComputedStyle(element).width, 10);
+            startHeight = -1;
+            document.documentElement.addEventListener("mousemove", doDrag, false);
+            document.documentElement.addEventListener("mouseup", stopDrag, false);
+        }
+
+        function initBarBottom(e) {
+            element = document.getElementById("resultsbox");
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = -1;
+            startHeight = parseInt(document.defaultView.getComputedStyle(element).height, 10);
+            document.documentElement.addEventListener("mousemove", doDrag, false);
+            document.documentElement.addEventListener("mouseup", stopDrag, false);
+            $(element).addClass("notextselect");
+        }
+
+        function doDrag(e) {
+            if (startWidth != -1)
+                element.style.width = startWidth + e.clientX - startX + "px";
+            if (startHeight != -1)
+                element.style.height = startHeight - (e.clientY - startY) + "px";
+        }
+
+        function stopDrag(e) {
+            $(element).removeClass("notextselect");
+            document.documentElement.removeEventListener("mousemove", doDrag, false);
+            document.documentElement.removeEventListener("mouseup", stopDrag, false);
+        }
+    </script>
+
+
+    <script src="scripts/car_capa.js" ></script>
+   
+
+</body>
+</html>
+
