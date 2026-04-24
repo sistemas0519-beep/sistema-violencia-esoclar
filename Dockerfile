@@ -31,18 +31,32 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY --from=spiralscout/roadrunner:2.4.2 /usr/bin/rr /usr/bin/rr
 
 WORKDIR /app
+
+# Copiar solo archivos de dependencias primero (mejor cache de capas)
+COPY composer.json composer.lock ./
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+
+# Copiar el resto del código
 COPY . .
-RUN rm -rf /app/vendor /app/composer.lock
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
-RUN composer require laravel/octane spiral/roadrunner --no-interaction
+
+# Instalar octane y roadrunner si no están en composer.json
+RUN composer require laravel/octane spiral/roadrunner --no-interaction --no-update 2>/dev/null || true
+RUN composer update --no-interaction --prefer-dist --optimize-autoloader
+
 COPY .env.example .env
-RUN mkdir -p /app/storage/logs /app/database \
-    && touch /app/database/database.sqlite
-RUN php artisan key:generate
+
+RUN mkdir -p /app/storage/logs /app/storage/framework/cache \
+        /app/storage/framework/sessions /app/storage/framework/views \
+        /app/database \
+    && touch /app/database/database.sqlite \
+    && chmod -R 775 /app/storage /app/bootstrap/cache
+
+RUN php artisan key:generate --force
 RUN php artisan cache:clear || true
 RUN php artisan view:clear || true
 RUN php artisan config:clear || true
 RUN php artisan octane:install --server="swoole" --no-interaction || true
-CMD ["php", "artisan", "octane:start", "--server=swoole", "--host=0.0.0.0", "--port=8000"]
 
-EXPOSE 9000
+EXPOSE 8000
+
+CMD ["php", "artisan", "octane:start", "--server=swoole", "--host=0.0.0.0", "--port=8000"]
