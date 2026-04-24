@@ -36,12 +36,13 @@ RUN rm -rf /app/vendor /app/composer.lock
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 RUN composer require laravel/octane spiral/roadrunner --no-interaction
 COPY .env.example .env
-RUN mkdir -p /app/storage/logs
+RUN mkdir -p /app/storage/logs /app/database \
+    && touch /app/database/database.sqlite
 RUN php artisan key:generate
-RUN php artisan cache:clear
-RUN php artisan view:clear
-RUN php artisan config:clear
+RUN php artisan cache:clear || true
+RUN php artisan view:clear || true
+RUN php artisan config:clear || true
 RUN php artisan octane:install --server="swoole" --no-interaction || true
 CMD ["php", "artisan", "octane:start", "--server=swoole", "--host=0.0.0.0", "--port=8000"]
 
-EXPOSE 8000
+EXPOSE 9000
