@@ -23,6 +23,9 @@ RUN apt-get update && apt-get install -y \
         bcmath \
         sockets \
         pcntl \
+        xml \
+        dom \
+        fileinfo \
     && pecl install swoole \
     && docker-php-ext-enable swoole \
     && rm -rf /var/lib/apt/lists/*
@@ -32,16 +35,7 @@ COPY --from=spiralscout/roadrunner:2.4.2 /usr/bin/rr /usr/bin/rr
 
 WORKDIR /app
 
-# Copiar solo archivos de dependencias primero (mejor cache de capas)
-COPY composer.json composer.lock ./
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
-
-# Copiar el resto del código
 COPY . .
-
-# Instalar octane y roadrunner si no están en composer.json
-RUN composer require laravel/octane spiral/roadrunner --no-interaction --no-update 2>/dev/null || true
-RUN composer update --no-interaction --prefer-dist --optimize-autoloader
 
 COPY .env.example .env
 
@@ -50,6 +44,8 @@ RUN mkdir -p /app/storage/logs /app/storage/framework/cache \
         /app/database \
     && touch /app/database/database.sqlite \
     && chmod -R 775 /app/storage /app/bootstrap/cache
+
+RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist --optimize-autoloader
 
 RUN php artisan key:generate --force
 RUN php artisan cache:clear || true
