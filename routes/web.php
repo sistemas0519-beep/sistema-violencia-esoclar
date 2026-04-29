@@ -65,20 +65,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('rol:alumno,docente')->group(function () {
         Route::get('/alumno/dashboard', function () {
             $userId = auth()->id();
-            $casos = Caso::where('denunciante_id', $userId)->get();
-            $totalCasos = $casos->count();
-            $pendientes = $casos->where('estado', 'pendiente')->count();
-            $enProceso = $casos->where('estado', 'en_proceso')->count();
-            $resueltos = $casos->where('estado', 'resuelto')->count();
-            $ultimosCasos = Caso::with('asignado')
+            // Una sola consulta con agregados en lugar de cargar todos los registros en PHP
+            $stats = Caso::where('denunciante_id', $userId)
+                ->selectRaw("
+                    COUNT(*) as total,
+                    SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
+                    SUM(CASE WHEN estado = 'en_proceso' THEN 1 ELSE 0 END) as en_proceso,
+                    SUM(CASE WHEN estado = 'resuelto' THEN 1 ELSE 0 END) as resueltos
+                ")->first();
+
+            $ultimosCasos = Caso::with('asignado:id,name,rol')
                 ->where('denunciante_id', $userId)
+                ->select(['id','codigo_caso','tipo_violencia','estado','prioridad','created_at','asignado_a'])
                 ->orderByDesc('created_at')
                 ->limit(5)
                 ->get();
 
-            return view('alumno.dashboard', compact(
-                'totalCasos', 'pendientes', 'enProceso', 'resueltos', 'ultimosCasos'
-            ));
+            return view('alumno.dashboard', [
+                'totalCasos' => $stats->total,
+                'pendientes' => $stats->pendientes,
+                'enProceso'  => $stats->en_proceso,
+                'resueltos'  => $stats->resueltos,
+                'ultimosCasos' => $ultimosCasos,
+            ]);
         })->name('alumno.dashboard');
 
         Route::get('/alumno/denuncia', [ControladorDenuncias::class, 'index'])
@@ -107,20 +116,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('rol:docente')->group(function () {
         Route::get('/docente/dashboard', function () {
             $userId = auth()->id();
-            $casos = Caso::where('denunciante_id', $userId)->get();
-            $totalReportes = $casos->count();
-            $pendientes = $casos->where('estado', 'pendiente')->count();
-            $enProceso = $casos->where('estado', 'en_proceso')->count();
-            $resueltos = $casos->where('estado', 'resuelto')->count();
-            $ultimosReportes = Caso::with('asignado')
+            $stats = Caso::where('denunciante_id', $userId)
+                ->selectRaw("
+                    COUNT(*) as total,
+                    SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
+                    SUM(CASE WHEN estado = 'en_proceso' THEN 1 ELSE 0 END) as en_proceso,
+                    SUM(CASE WHEN estado = 'resuelto' THEN 1 ELSE 0 END) as resueltos
+                ")->first();
+
+            $ultimosReportes = Caso::with('asignado:id,name,rol')
                 ->where('denunciante_id', $userId)
+                ->select(['id','codigo_caso','tipo_violencia','estado','prioridad','created_at','asignado_a'])
                 ->orderByDesc('created_at')
                 ->limit(5)
                 ->get();
 
-            return view('docente.dashboard', compact(
-                'totalReportes', 'pendientes', 'enProceso', 'resueltos', 'ultimosReportes'
-            ));
+            return view('docente.dashboard', [
+                'totalReportes' => $stats->total,
+                'pendientes'    => $stats->pendientes,
+                'enProceso'     => $stats->en_proceso,
+                'resueltos'     => $stats->resueltos,
+                'ultimosReportes' => $ultimosReportes,
+            ]);
         })->name('docente.dashboard');
     });
 

@@ -86,7 +86,12 @@ class SecurityHeaders
 
         // HSTS: solo en producción con HTTPS
         if (app()->isProduction()) {
-            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+            $response->headers->set(
+                'Strict-Transport-Security',
+                'max-age=31536000; includeSubDomains; preload'
+            );
+            // Certificate Transparency (deprecated pero aún útil como señal)
+            $response->headers->set('Expect-CT', 'max-age=86400, enforce');
         }
 
         return $response;

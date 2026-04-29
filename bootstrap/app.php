@@ -17,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO |
             \Illuminate\Http\Request::HEADER_X_FORWARDED_AWS_ELB);
 
+        // Rate limiting usando cache estándar (sin extensión Redis)
+
         $middleware->alias([
             'rol' => \App\Http\Middleware\RolMiddleware::class,
             'session.timeout' => \App\Http\Middleware\CheckSessionTimeout::class,

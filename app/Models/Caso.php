@@ -63,12 +63,6 @@ class Caso extends Model
         'nivel_severidad'         => 'integer',
     ];
 
-    /**
-     * Relaciones cargadas automáticamente (evita N+1 en la mayoría de vistas).
-     * Solo carga `asignado` por defecto para no sobrecargar en listados grandes.
-     */
-    protected $with = ['asignado'];
-
     // ─── Relaciones ───────────────────────────────────────────────────────────
 
     public function denunciante()

@@ -24,39 +24,74 @@ class ReportesService
     public static function getEstadisticasGenerales(): array
     {
         return Cache::remember('estadisticas:generales', self::STATS_CACHE_TTL, function () {
-            $hoy = today();
-            $semana = today()->subDays(7);
-            $mes = today()->subDays(30);
+            $hoy   = today()->toDateString();
+            $semana = today()->subDays(7)->toDateString();
+            $mes    = today()->subDays(30)->toDateString();
+
+            // Una sola consulta para todos los agregados de casos (evita 11 COUNT separados)
+            $casosRow = DB::selectOne("
+                SELECT
+                    COUNT(*)                                                   AS total,
+                    SUM(DATE(created_at) = ?)                                  AS hoy,
+                    SUM(DATE(created_at) >= ?)                                 AS semana,
+                    SUM(DATE(created_at) >= ?)                                 AS mes,
+                    SUM(estado = 'pendiente')                                  AS pendiente,
+                    SUM(estado = 'en_proceso')                                 AS en_proceso,
+                    SUM(estado = 'resuelto')                                   AS resuelto,
+                    SUM(estado = 'cerrado')                                    AS cerrado,
+                    SUM(prioridad = 'urgente' AND estado != 'cerrado')         AS urgente,
+                    SUM(sla_vencido = 1)                                       AS sla_vencido,
+                    SUM(escalado = 1)                                          AS escalado
+                FROM casos
+            ", [$hoy, $semana, $mes]);
+
+            // Una consulta para asignaciones
+            $asigRow = DB::selectOne("
+                SELECT
+                    COUNT(*)                             AS total,
+                    SUM(estado = 'activa')               AS activa,
+                    SUM(estado = 'finalizada')           AS finalizada,
+                    SUM(estado = 'cancelada')            AS cancelada
+                FROM asignaciones
+            ");
+
+            // Una consulta para usuarios
+            $userRow = DB::selectOne("
+                SELECT
+                    COUNT(*)                                                                   AS total,
+                    SUM(activo = 1)                                                            AS activos,
+                    SUM(activo = 0)                                                            AS inactivos,
+                    SUM(rol = 'psicologo' AND activo = 1)                                     AS psicologos,
+                    SUM(rol = 'psicologo' AND activo = 1 AND disponibilidad = 'disponible')   AS psicologos_disponibles
+                FROM users
+            ");
 
             return [
                 'casos' => [
-                    'total' => Caso::count(),
-                    'hoy' => Caso::whereDate('created_at', $hoy)->count(),
-                    'semana' => Caso::whereBetween('created_at', [$semana, now()])->count(),
-                    'mes' => Caso::whereBetween('created_at', [$mes, now()])->count(),
-                    'pendiente' => Caso::where('estado', 'pendiente')->count(),
-                    'en_proceso' => Caso::where('estado', 'en_proceso')->count(),
-                    'resuelto' => Caso::where('estado', 'resuelto')->count(),
-                    'cerrado' => Caso::where('estado', 'cerrado')->count(),
-                    'urgente' => Caso::where('prioridad', 'urgente')->where('estado', '!=', 'cerrado')->count(),
-                    'sla_vencido' => Caso::where('sla_vencido', true)->count(),
-                    'escalado' => Caso::where('escalado', true)->count(),
+                    'total'      => (int) $casosRow->total,
+                    'hoy'        => (int) $casosRow->hoy,
+                    'semana'     => (int) $casosRow->semana,
+                    'mes'        => (int) $casosRow->mes,
+                    'pendiente'  => (int) $casosRow->pendiente,
+                    'en_proceso' => (int) $casosRow->en_proceso,
+                    'resuelto'   => (int) $casosRow->resuelto,
+                    'cerrado'    => (int) $casosRow->cerrado,
+                    'urgente'    => (int) $casosRow->urgente,
+                    'sla_vencido'=> (int) $casosRow->sla_vencido,
+                    'escalado'   => (int) $casosRow->escalado,
                 ],
                 'asignaciones' => [
-                    'total' => Asignacion::count(),
-                    'activa' => Asignacion::where('estado', 'activa')->count(),
-                    'finalizada' => Asignacion::where('estado', 'finalizada')->count(),
-                    'cancelada' => Asignacion::where('estado', 'cancelada')->count(),
+                    'total'     => (int) $asigRow->total,
+                    'activa'    => (int) $asigRow->activa,
+                    'finalizada'=> (int) $asigRow->finalizada,
+                    'cancelada' => (int) $asigRow->cancelada,
                 ],
                 'usuarios' => [
-                    'total' => User::count(),
-                    'activos' => User::where('activo', true)->count(),
-                    'inactivos' => User::where('activo', false)->count(),
-                    'psicologos' => User::where('rol', 'psicologo')->where('activo', true)->count(),
-                    'psicologos_disponibles' => User::where('rol', 'psicologo')
-                        ->where('activo', true)
-                        ->where('disponibilidad', 'disponible')
-                        ->count(),
+                    'total'                 => (int) $userRow->total,
+                    'activos'               => (int) $userRow->activos,
+                    'inactivos'             => (int) $userRow->inactivos,
+                    'psicologos'            => (int) $userRow->psicologos,
+                    'psicologos_disponibles'=> (int) $userRow->psicologos_disponibles,
                 ],
             ];
         });
@@ -101,20 +136,33 @@ class ReportesService
                 $query->where('estado', $estado);
             }
 
-            $total = $query->count();
-            $resuelto = (clone $query)->where('estado', 'resuelto')->count();
-            $cerrado = (clone $query)->where('estado', 'cerrado')->count();
+            // Una sola consulta con todos los agregados
+            $row = (clone $query)->selectRaw("
+                COUNT(*)                                              AS total,
+                SUM(estado = 'pendiente')                             AS pendiente,
+                SUM(estado = 'en_proceso')                            AS en_proceso,
+                SUM(estado = 'resuelto')                              AS resuelto,
+                SUM(estado = 'cerrado')                               AS cerrado,
+                SUM(es_anonimo = 1)                                   AS anonimos,
+                SUM(asignado_a IS NULL)                               AS sin_asignar,
+                SUM(prioridad = 'urgente')                            AS urgentes,
+                SUM(sla_vencido = 1)                                  AS sla_vencido
+            ")->first();
+
+            $total   = (int) $row->total;
+            $resuelto = (int) $row->resuelto;
+            $cerrado  = (int) $row->cerrado;
 
             return [
-                'total' => $total,
-                'pendiente' => (clone $query)->where('estado', 'pendiente')->count(),
-                'en_proceso' => (clone $query)->where('estado', 'en_proceso')->count(),
-                'resuelto' => $resuelto,
-                'cerrado' => $cerrado,
-                'anonimos' => (clone $query)->where('es_anonimo', true)->count(),
-                'sin_asignar' => (clone $query)->whereNull('asignado_a')->count(),
-                'urgentes' => (clone $query)->where('prioridad', 'urgente')->count(),
-                'sla_vencido' => (clone $query)->where('sla_vencido', true)->count(),
+                'total'           => $total,
+                'pendiente'       => (int) $row->pendiente,
+                'en_proceso'      => (int) $row->en_proceso,
+                'resuelto'        => $resuelto,
+                'cerrado'         => $cerrado,
+                'anonimos'        => (int) $row->anonimos,
+                'sin_asignar'     => (int) $row->sin_asignar,
+                'urgentes'        => (int) $row->urgentes,
+                'sla_vencido'     => (int) $row->sla_vencido,
                 'tasa_resolucion' => $total > 0 ? round((($resuelto + $cerrado) / $total) * 100, 1) : 0,
             ];
         });

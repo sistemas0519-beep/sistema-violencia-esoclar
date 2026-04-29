@@ -33,7 +33,7 @@ class Asignacion extends Model
         'solicitud_cambio' => 'boolean',
     ];
 
-    protected $with = ['psicologo', 'paciente', 'caso', 'creador'];
+    // Las relaciones se cargan explícitamente con ->with() en cada consulta para evitar JOINs innecesarios.
 
     public function psicologo()
     {
