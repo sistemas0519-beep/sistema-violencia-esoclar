@@ -1,0 +1,11 @@
+{
+  "name": "Sistema Violencia Escolar",
+  "portsAttributes": {
+    "8000": {
+      "label": "App Laravel",
+      "visibility": "public",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "forwardPorts": [8000]
+}

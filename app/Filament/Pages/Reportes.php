@@ -4,8 +4,10 @@ namespace App\Filament\Pages;
 
 use App\Models\Asignacion;
 use App\Models\Caso;
+use App\Models\User;
 use App\Services\ReportesService;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\DB;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -42,6 +44,8 @@ class Reportes extends Page implements HasForms
     public ?string $fecha_fin      = null;
     public ?string $tipo_violencia = null;
     public ?string $estado         = null;
+    public ?string $prioridad      = null;
+    public ?string $region_filtro  = null;
 
     public function form(Form $form): Form
     {
@@ -70,28 +74,60 @@ class Reportes extends Page implements HasForms
 
                 Select::make('estado')
                     ->label('Estado')
-                    ->options(['pendiente' => 'Pendiente', 'en_proceso' => 'En Proceso', 
+                    ->options(['pendiente' => 'Pendiente', 'en_proceso' => 'En Proceso',
                                'resuelto' => 'Resuelto', 'cerrado' => 'Cerrado'])
                     ->placeholder('Todos')
                     ->nullable(),
+
+                Select::make('prioridad')
+                    ->label('Prioridad')
+                    ->options(['baja' => 'Baja', 'normal' => 'Normal', 'alta' => 'Alta', 'urgente' => 'Urgente'])
+                    ->placeholder('Todas')
+                    ->nullable(),
+
+                Select::make('region_filtro')
+                    ->label('Región')
+                    ->options(fn () => Caso::whereNotNull('region')->where('region', '!=', '')->distinct()->pluck('region', 'region')->map(fn ($v) => ucfirst(strtolower($v)))->toArray())
+                    ->placeholder('Todas')
+                    ->searchable()
+                    ->nullable(),
             ])
-            ->columns(4)
+            ->columns(3)
             ->statePath('');
     }
 
     public function limpiarFiltros(): void
     {
         $this->fecha_inicio = $this->fecha_fin = $this->tipo_violencia = $this->estado = null;
+        $this->prioridad = $this->region_filtro = null;
         $this->form->fill();
+    }
+
+    public function setPreset(string $preset): void
+    {
+        $this->limpiarFiltros();
+        match ($preset) {
+            'hoy'    => $this->fecha_inicio = $this->fecha_fin = today()->toDateString(),
+            'semana' => [$this->fecha_inicio = today()->subDays(6)->toDateString(), $this->fecha_fin = today()->toDateString()],
+            'mes'    => [$this->fecha_inicio = today()->startOfMonth()->toDateString(), $this->fecha_fin = today()->endOfMonth()->toDateString()],
+            'anio'   => [$this->fecha_inicio = today()->startOfYear()->toDateString(), $this->fecha_fin = today()->endOfYear()->toDateString()],
+            default  => null,
+        };
+        $this->form->fill([
+            'fecha_inicio'  => $this->fecha_inicio,
+            'fecha_fin'     => $this->fecha_fin,
+        ]);
     }
 
     protected function baseQuery()
     {
         $q = Caso::query();
-        if ($this->fecha_inicio) $q->whereDate('created_at', '>=', $this->fecha_inicio);
-        if ($this->fecha_fin) $q->whereDate('created_at', '<=', $this->fecha_fin);
+        if ($this->fecha_inicio)   $q->whereDate('created_at', '>=', $this->fecha_inicio);
+        if ($this->fecha_fin)      $q->whereDate('created_at', '<=', $this->fecha_fin);
         if ($this->tipo_violencia) $q->where('tipo_violencia', $this->tipo_violencia);
-        if ($this->estado) $q->where('estado', $this->estado);
+        if ($this->estado)         $q->where('estado', $this->estado);
+        if ($this->prioridad)      $q->where('prioridad', $this->prioridad);
+        if ($this->region_filtro)  $q->where('region', $this->region_filtro);
         return $q;
     }
 
@@ -126,6 +162,65 @@ class Reportes extends Page implements HasForms
     public function getPorRegionProperty(): array
     {
         return ReportesService::getCasosPorRegion(8);
+    }
+
+    public function get14DiasProperty(): array
+    {
+        return ReportesService::getCasosUltimos14Dias();
+    }
+
+    /** Alias para compatibilidad con la vista JS (@js($this->diasData)) */
+    public function getDiasDataProperty(): array
+    {
+        return $this->get14DiasProperty();
+    }
+
+    public function getTopEscuelasProperty(): array
+    {
+        return $this->baseQuery()
+            ->select('escuela_nombre', DB::raw('count(*) as total'))
+            ->whereNotNull('escuela_nombre')
+            ->where('escuela_nombre', '!=', '')
+            ->groupBy('escuela_nombre')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get()
+            ->map(fn ($r) => ['escuela' => $r->escuela_nombre, 'total' => $r->total])
+            ->toArray();
+    }
+
+    public function getTasasResolucionProperty(): array
+    {
+        return ReportesService::getTasasResolucionPorMes();
+    }
+
+    public function getAlertasCriticasProperty(): array
+    {
+        return [
+            'urgentes'   => Caso::where('prioridad', 'urgente')->whereNotIn('estado', ['cerrado'])->count(),
+            'sla_vencido' => Caso::where('sla_vencido', true)->whereNotIn('estado', ['cerrado'])->count(),
+            'escalados'  => Caso::where('escalado', true)->whereNotIn('estado', ['cerrado'])->count(),
+            'sin_atencion_48h' => Caso::where('estado', 'pendiente')
+                ->where('created_at', '<=', now()->subHours(48))
+                ->count(),
+        ];
+    }
+
+    public function getDistribucionPrioridadProperty(): array
+    {
+        $total = $this->baseQuery()->count() ?: 1;
+        return $this->baseQuery()
+            ->select('prioridad', DB::raw('count(*) as total'))
+            ->whereNotNull('prioridad')
+            ->groupBy('prioridad')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($r) => [
+                'prioridad'  => $r->prioridad,
+                'total'      => $r->total,
+                'porcentaje' => round(($r->total / $total) * 100, 1),
+            ])
+            ->toArray();
     }
 
     public function getPorPsicologoProperty(): array
@@ -212,13 +307,61 @@ class Reportes extends Page implements HasForms
     {
         $casos = $this->casoRows();
         $filename = 'reporte-casos-' . now()->format('Y-m-d') . '.xls';
+
         return response()->streamDownload(function () use ($casos) {
-            echo '<?xml version="1.0" encoding="UTF-8"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Casos"><Table>';
-            echo '<Row><Cell><Data ss:Type="String">C�digo</Data></Cell><Cell><Data ss:Type="String">Tipo</Data></Cell></Row>';
-            foreach ($casos as $c) {
-                echo '<Row><Cell><Data ss:Type="String">' . htmlspecialchars($c->codigo_caso, ENT_XML1) . '</Data></Cell></Row>';
+            $cols = [
+                'Código', 'Tipo', 'Estado', 'Prioridad', 'Anónimo',
+                'Denunciante', 'Asignado', 'Región', 'Provincia', 'Escuela',
+                'Fecha Incidente', 'SLA Vencido', 'Escalado', 'Fecha Registro',
+            ];
+
+            echo '<?xml version="1.0" encoding="UTF-8"?>' . PHP_EOL;
+            echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"';
+            echo ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' . PHP_EOL;
+            echo '<Styles>';
+            echo '<Style ss:ID="h"><Font ss:Bold="1" ss:Color="#FFFFFF" ss:Size="11"/>';
+            echo '<Interior ss:Color="#4F46E5" ss:Pattern="Solid"/></Style>';
+            echo '<Style ss:ID="alt"><Interior ss:Color="#F5F3FF" ss:Pattern="Solid"/></Style>';
+            echo '</Styles>' . PHP_EOL;
+            echo '<Worksheet ss:Name="Casos"><Table>' . PHP_EOL;
+
+            // Header
+            echo '<Row ss:Height="22">';
+            foreach ($cols as $col) {
+                echo '<Cell ss:StyleID="h"><Data ss:Type="String">' . htmlspecialchars($col, ENT_XML1) . '</Data></Cell>';
             }
+            echo '</Row>' . PHP_EOL;
+
+            // Data rows
+            foreach ($casos as $i => $c) {
+                $styleId = ($i % 2 === 1) ? ' ss:StyleID="alt"' : '';
+                $row = [
+                    $c->codigo_caso,
+                    $this->tipoLabel[$c->tipo_violencia]  ?? $c->tipo_violencia,
+                    $this->estadoLabel[$c->estado]        ?? $c->estado,
+                    ucfirst($c->prioridad                 ?? 'normal'),
+                    $c->es_anonimo ? 'Sí' : 'No',
+                    $c->es_anonimo ? 'Anónimo' : ($c->denunciante?->name ?? '—'),
+                    $c->asignado?->name  ?? 'Sin asignar',
+                    $c->region           ?? '—',
+                    $c->provincia        ?? '—',
+                    $c->escuela_nombre   ?? '—',
+                    $c->fecha_incidente?->format('d/m/Y') ?? '—',
+                    $c->sla_vencido ? 'Sí' : 'No',
+                    $c->escalado    ? 'Sí' : 'No',
+                    $c->created_at->format('d/m/Y H:i'),
+                ];
+                echo '<Row>';
+                foreach ($row as $cell) {
+                    echo '<Cell' . $styleId . '><Data ss:Type="String">' . htmlspecialchars((string) $cell, ENT_XML1) . '</Data></Cell>';
+                }
+                echo '</Row>' . PHP_EOL;
+            }
+
             echo '</Table></Worksheet></Workbook>';
-        }, $filename, ['Content-Type' => 'application/vnd.ms-excel']);
+        }, $filename, [
+            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 }

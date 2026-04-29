@@ -148,19 +148,7 @@
             <div class="rol-sub">Atender y gestionar casos</div>
         </label>
 
-        <label class="rol-card" style="--rc: rgba(239,68,68,.7); --rc-bg: rgba(239,68,68,.08);" id="card-admin">
-            <input type="radio" name="rol" value="admin" class="sr-only"
-                   {{ old('rol') === 'admin' ? 'checked' : '' }}
-                   onchange="selectRol(this, 'card-admin')">
-            <div class="check-mark">
-                <svg width="8" height="8" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="4">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                </svg>
-            </div>
-            <div class="rol-icon" style="background:rgba(239,68,68,.15); color:#f87171">🛡️</div>
-            <div class="rol-name">Administrador</div>
-            <div class="rol-sub">Gestión completa del sistema</div>
-        </label>
+
 
     </div>
 

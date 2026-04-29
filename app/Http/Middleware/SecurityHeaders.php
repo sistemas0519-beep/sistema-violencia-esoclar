@@ -12,8 +12,13 @@ class SecurityHeaders
     {
         $response = $next($request);
 
-        // Evitar clickjacking
-        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
+        // Detectar si estamos en Codespaces / entorno de preview con iframe
+        $isCodespaces = str_contains(config('app.url', ''), '.app.github.dev');
+
+        // Evitar clickjacking (relajado en Codespaces para permitir preview iframe)
+        if (! $isCodespaces) {
+            $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
+        }
 
         // Evitar MIME-sniffing
         $response->headers->set('X-Content-Type-Options', 'nosniff');
@@ -31,15 +36,36 @@ class SecurityHeaders
         $response->headers->remove('X-Powered-By');
         $response->headers->set('Server', '');
 
-        // Content Security Policy básico
+        // frame-ancestors: permite Codespaces en dev, solo 'self' en producción
+        $frameAncestors = $isCodespaces
+            ? "frame-ancestors 'self' https://*.app.github.dev"
+            : "frame-ancestors 'self'";
+
+        // Detectar entorno local para permitir el servidor de Vite (HMR)
+        $isLocal = app()->environment('local');
+
+        // Origen del servidor de Vite (solo activo en local)
+        $viteOrigin = $isLocal ? ' http://localhost:5173 ws://localhost:5173' : '';
+
+        // connect-src: permite Codespaces en dev + Vite HMR en local
+        $connectSrcExtras = '';
+        if ($isCodespaces) {
+            $connectSrcExtras = ' https://*.app.github.dev wss://*.app.github.dev';
+        }
+        if ($isLocal) {
+            $connectSrcExtras .= ' http://localhost:5173 ws://localhost:5173';
+        }
+        $connectSrc = "connect-src 'self'{$connectSrcExtras}";
+
+        // Content Security Policy
         $csp = implode('; ', [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.bunny.net",
-            "style-src 'self' 'unsafe-inline' https://fonts.bunny.net",
-            "font-src 'self' https://fonts.bunny.net",
-            "img-src 'self' data:",
-            "connect-src 'self'",
-            "frame-ancestors 'self'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.bunny.net{$viteOrigin}",
+            "style-src 'self' 'unsafe-inline' https://fonts.bunny.net{$viteOrigin}",
+            "font-src 'self' https://fonts.bunny.net{$viteOrigin}",
+            "img-src 'self' data: https:",
+            $connectSrc,
+            $frameAncestors,
             "base-uri 'self'",
             "form-action 'self'",
         ]);
