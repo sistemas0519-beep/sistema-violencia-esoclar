@@ -10,6 +10,8 @@ export default defineConfig({
     ],
     server: {
         host: 'localhost',
+        port: 5173,
+        strictPort: false, // si 5173 está ocupado usa el siguiente; el middleware lo detecta via public/hot
         cors: true,
     },
 });

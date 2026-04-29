@@ -25,7 +25,6 @@ class ApoyoPanelProvider extends PanelProvider
         return $panel
             ->id('apoyo')
             ->path('apoyo')
-            ->login()
             ->colors([
                 'primary' => Color::Teal,
                 'danger'  => Color::Rose,
@@ -44,6 +43,7 @@ class ApoyoPanelProvider extends PanelProvider
             ->widgets([
                 Widgets\AccountWidget::class,
             ])
+            ->authMiddleware([])
             ->navigationGroups([
                 'Casos Sensibles',
                 'Asesoría y Apoyo',
@@ -52,7 +52,10 @@ class ApoyoPanelProvider extends PanelProvider
                 'Métricas',
             ])
             ->sidebarCollapsibleOnDesktop()
-            ->databaseNotifications()
+            ->login()
+            ->authMiddleware([
+                Authenticate::class,
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -63,9 +66,6 @@ class ApoyoPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-            ])
-            ->authMiddleware([
-                Authenticate::class,
             ]);
     }
 }

@@ -44,8 +44,21 @@ class SecurityHeaders
         // Detectar entorno local para permitir el servidor de Vite (HMR)
         $isLocal = app()->environment('local');
 
-        // Origen del servidor de Vite (solo activo en local)
-        $viteOrigin = $isLocal ? ' http://localhost:5173 ws://localhost:5173' : '';
+        // Leer la URL real del servidor Vite desde public/hot (creado por laravel-vite-plugin)
+        // Esto resuelve el problema cuando Vite usa un puerto distinto al 5173 (ej. 5174)
+        $viteOrigin = '';
+        if ($isLocal) {
+            $hotFile = public_path('hot');
+            if (file_exists($hotFile)) {
+                $hotUrl = rtrim(file_get_contents($hotFile), "\n");
+                // Convertir http:// a ws:// para WebSockets
+                $wsUrl = str_replace(['https://', 'http://'], ['wss://', 'ws://'], $hotUrl);
+                $viteOrigin = " {$hotUrl} {$wsUrl}";
+            } else {
+                // Fallback: permitir los puertos más comunes de Vite
+                $viteOrigin = ' http://localhost:5173 ws://localhost:5173 http://localhost:5174 ws://localhost:5174';
+            }
+        }
 
         // connect-src: permite Codespaces en dev + Vite HMR en local
         $connectSrcExtras = '';
@@ -53,7 +66,7 @@ class SecurityHeaders
             $connectSrcExtras = ' https://*.app.github.dev wss://*.app.github.dev';
         }
         if ($isLocal) {
-            $connectSrcExtras .= ' http://localhost:5173 ws://localhost:5173';
+            $connectSrcExtras .= $viteOrigin;
         }
         $connectSrc = "connect-src 'self'{$connectSrcExtras}";
 
