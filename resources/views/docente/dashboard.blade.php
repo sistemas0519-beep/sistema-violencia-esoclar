@@ -1,8 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-bold text-xl text-gray-800 leading-tight">
-            Panel del Docente
-        </h2>
+        <h2 class="font-bold text-xl text-gray-800 leading-tight">Panel del Docente</h2>
     </x-slot>
 
     <div class="py-6 sm:py-10">

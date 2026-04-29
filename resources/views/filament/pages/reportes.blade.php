@@ -11,6 +11,10 @@
             this.renderBarChart();
             this.renderLineChart();
             this.renderRegionChart();
+            this.renderChart14d();
+            this.renderPrioridadChart();
+            this.renderResolucionChart();
+            this.renderEscuelasChart();
         });
     },
     renderDonutChart() {
@@ -177,6 +181,132 @@
                 animation: { duration: 1000, easing: 'easeOutQuart' }
             }
         });
+    },
+    renderChart14d() {
+        const el = document.getElementById('chart14d');
+        if (!el) return;
+        const ctx = el.getContext('2d');
+        if (el._chartInstance) el._chartInstance.destroy();
+        const datos = @js($this->diasData ?? []);
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(20,184,166,.3)');
+        gradient.addColorStop(1, 'rgba(20,184,166,.01)');
+        el._chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: datos.map(d => d.fecha),
+                datasets: [{
+                    label: 'Casos',
+                    data: datos.map(d => d.casos),
+                    borderColor: '#14b8a6',
+                    backgroundColor: gradient,
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#14b8a6',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: 'rgba(17,24,39,.9)', padding: 10, cornerRadius: 8,
+                        callbacks: { label: (c) => ` ${c.parsed.y} casos` } }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: 'rgba(0,0,0,.05)' } },
+                    x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+                },
+                animation: { duration: 900, easing: 'easeOutQuart' }
+            }
+        });
+    },
+    renderPrioridadChart() {
+        const el = document.getElementById('prioridadChart');
+        if (!el) return;
+        const ctx = el.getContext('2d');
+        if (el._chartInstance) el._chartInstance.destroy();
+        const datos = @js($this->distribucionPrioridad ?? []);
+        const labels = { baja: 'Baja', normal: 'Normal', alta: 'Alta', urgente: 'Urgente' };
+        const colors = { baja: '#6b7280', normal: '#3b82f6', alta: '#f97316', urgente: '#ef4444' };
+        el._chartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: datos.map(d => labels[d.prioridad] || d.prioridad),
+                datasets: [{ data: datos.map(d => d.total),
+                    backgroundColor: datos.map(d => colors[d.prioridad] || '#6b7280'),
+                    borderWidth: 0, hoverOffset: 6, borderRadius: 3 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '68%',
+                plugins: { legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } },
+                    tooltip: { backgroundColor: 'rgba(17,24,39,.9)', padding: 10, cornerRadius: 8 } }
+            }
+        });
+    },
+    renderResolucionChart() {
+        const el = document.getElementById('resolucionChart');
+        if (!el) return;
+        const ctx = el.getContext('2d');
+        if (el._chartInstance) el._chartInstance.destroy();
+        const datos = @js($this->tasasResolucion ?? []);
+        el._chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: datos.map(d => d.mes),
+                datasets: [{
+                    label: 'Tasa %',
+                    data: datos.map(d => d.tasa),
+                    backgroundColor: datos.map(d => d.tasa >= 70 ? 'rgba(16,185,129,.7)' : d.tasa >= 40 ? 'rgba(245,158,11,.7)' : 'rgba(239,68,68,.7)'),
+                    borderRadius: 6, borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false },
+                    tooltip: { backgroundColor: 'rgba(17,24,39,.9)', padding: 10, cornerRadius: 8,
+                        callbacks: { label: (c) => ` ${c.parsed.y}% resolución` } } },
+                scales: {
+                    y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,.05)' } },
+                    x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false } }
+                }
+            }
+        });
+    },
+    renderEscuelasChart() {
+        const el = document.getElementById('escuelasChart');
+        if (!el) return;
+        const ctx = el.getContext('2d');
+        if (el._chartInstance) el._chartInstance.destroy();
+        const datos = @js($this->topEscuelas ?? []);
+        el._chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: datos.map(d => d.escuela.length > 28 ? d.escuela.substring(0,26)+'…' : d.escuela),
+                datasets: [{
+                    label: 'Casos',
+                    data: datos.map(d => d.total),
+                    backgroundColor: 'rgba(139,92,246,.7)',
+                    borderColor: '#8b5cf6', borderWidth: 1.5,
+                    borderRadius: 6, borderSkipped: false,
+                }]
+            },
+            options: {
+                indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false },
+                    tooltip: { backgroundColor: 'rgba(17,24,39,.9)', padding: 10, cornerRadius: 8,
+                        callbacks: { label: (c) => ` ${c.parsed.x} casos` } } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: 'rgba(0,0,0,.05)' } },
+                    y: { ticks: { font: { size: 10 } }, grid: { display: false } }
+                }
+            }
+        });
     }
 }"
 x-init="init()"
@@ -290,7 +420,7 @@ wire:key="reportes-panel"
                 <p class="text-xs text-gray-400">Ajusta los parámetros para refinar los datos</p>
             </div>
         </div>
-        @if($fecha_inicio || $fecha_fin || $tipo_violencia || $estado || $prioridad || $nivel_severidad || $grado_grupo)
+        @if($fecha_inicio || $fecha_fin || $tipo_violencia || $estado || $prioridad || $nivel_severidad || $grado_grupo || $region_filtro)
             <button wire:click="limpiarFiltros"
                     class="text-xs text-red-500 hover:text-red-700 font-semibold flex items-center gap-1.5 transition-all px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,7 +430,6 @@ wire:key="reportes-panel"
             </button>
         @endif
     </div>
-
     {{-- Filtros activos badges --}}
     @php
         $filtrosActivos = array_filter([
@@ -309,6 +438,7 @@ wire:key="reportes-panel"
             $prioridad ? 'Prioridad: ' . ucfirst($prioridad) : null,
             $nivel_severidad ? 'Severidad: Niv. ' . $nivel_severidad : null,
             $grado_grupo ? 'Grado: ' . $grado_grupo : null,
+            $region_filtro ? 'Región: ' . ucfirst(strtolower($region_filtro)) : null,
             ($fecha_inicio || $fecha_fin) ? 'Período: ' . ($fecha_inicio ?? '...') . ' → ' . ($fecha_fin ?? '...') : null,
         ]);
     @endphp
@@ -326,6 +456,22 @@ wire:key="reportes-panel"
     <form wire:submit.prevent class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {{ $this->form }}
     </form>
+    {{-- Quick Date Presets --}}
+    <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+        <span class="text-xs text-gray-400 font-medium self-center mr-1">Acceso rápido:</span>
+        @foreach(['hoy' => 'Hoy', 'semana' => 'Esta semana', 'mes' => 'Este mes', 'anio' => 'Este año'] as $preset => $label)
+            <button wire:click="setPreset('{{ $preset }}')"
+                    class="text-xs px-3 py-1.5 rounded-lg font-semibold border transition-all
+                    {{ ($preset === 'hoy' && $fecha_inicio === today()->toDateString() && $fecha_inicio === $fecha_fin)
+                        || ($preset === 'semana' && $fecha_inicio === today()->subDays(6)->toDateString() && $fecha_fin === today()->toDateString())
+                        || ($preset === 'mes' && $fecha_inicio === today()->startOfMonth()->toDateString())
+                        || ($preset === 'anio' && $fecha_inicio === today()->startOfYear()->toDateString())
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow'
+                        : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 dark:hover:bg-indigo-900/20' }}">
+                {{ $label }}
+            </button>
+        @endforeach
+    </div>
 </div>
 
 {{-- ═══════════════════════════════════════════
@@ -469,23 +615,90 @@ wire:key="reportes-panel"
 
 </div>
 
-{{-- ═══════════════════════════════════════════
-     TAB NAVIGATION
-═══════════════════════════════════════════ --}}
-<div class="flex items-center gap-2 mb-6 overflow-x-auto pb-1 no-print anim-fade d3">
-    <button @click="activeTab = 'general'; $nextTick(() => initCharts())"
-            :class="activeTab === 'general' ? 'tab-active' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'"
-            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-        Vista General
-    </button>
-    <button @click="activeTab = 'charts'; $nextTick(() => initCharts())"
-            :class="activeTab === 'charts' ? 'tab-active' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'"
-            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
-        Gráficos
-    </button>
-    <button @click="activeTab = 'table'"
+{{-- Segunda fila KPIs: Urgentes, SLA Vencido, Escalados, En proceso --}}
+@php $alertas = $this->alertasCriticas; @endphp
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+    {{-- Urgentes --}}
+    <div class="flex items-center gap-4 rounded-xl p-4 shadow-sm border kpi-card anim-fade d5
+        {{ $alertas['urgentes'] > 0 ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700' }}">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+            {{ $alertas['urgentes'] > 0 ? 'bg-red-500 shadow-red-200 shadow' : 'bg-gray-400' }}">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+        </div>
+        <div>
+            <div class="text-2xl font-black {{ $alertas['urgentes'] > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400' }}">{{ $alertas['urgentes'] }}</div>
+            <div class="text-xs font-semibold {{ $alertas['urgentes'] > 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-400' }}">Urgentes activos</div>
+        </div>
+    </div>
+    {{-- SLA Vencido --}}
+    <div class="flex items-center gap-4 rounded-xl p-4 shadow-sm border kpi-card anim-fade d6
+        {{ $alertas['sla_vencido'] > 0 ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700' }}">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+            {{ $alertas['sla_vencido'] > 0 ? 'bg-orange-500 shadow-orange-200 shadow' : 'bg-gray-400' }}">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+        <div>
+            <div class="text-2xl font-black {{ $alertas['sla_vencido'] > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400' }}">{{ $alertas['sla_vencido'] }}</div>
+            <div class="text-xs font-semibold {{ $alertas['sla_vencido'] > 0 ? 'text-orange-500 dark:text-orange-400' : 'text-gray-400' }}">SLA vencido</div>
+        </div>
+    </div>
+    {{-- Escalados --}}
+    <div class="flex items-center gap-4 rounded-xl p-4 shadow-sm border kpi-card anim-fade d7
+        {{ $alertas['escalados'] > 0 ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700' }}">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+            {{ $alertas['escalados'] > 0 ? 'bg-amber-500 shadow-amber-200 shadow' : 'bg-gray-400' }}">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+            </svg>
+        </div>
+        <div>
+            <div class="text-2xl font-black {{ $alertas['escalados'] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-400' }}">{{ $alertas['escalados'] }}</div>
+            <div class="text-xs font-semibold {{ $alertas['escalados'] > 0 ? 'text-amber-500 dark:text-amber-400' : 'text-gray-400' }}">Escalados activos</div>
+        </div>
+    </div>
+    {{-- Sin atención +48h --}}
+    <div class="flex items-center gap-4 rounded-xl p-4 shadow-sm border kpi-card anim-fade d8
+        {{ $alertas['sin_atencion_48h'] > 0 ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700' }}">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+            {{ $alertas['sin_atencion_48h'] > 0 ? 'bg-rose-500 shadow-rose-200 shadow' : 'bg-gray-400' }}">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+            </svg>
+        </div>
+        <div>
+            <div class="text-2xl font-black {{ $alertas['sin_atencion_48h'] > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-400' }}">{{ $alertas['sin_atencion_48h'] }}</div>
+            <div class="text-xs font-semibold {{ $alertas['sin_atencion_48h'] > 0 ? 'text-rose-500 dark:text-rose-400' : 'text-gray-400' }}">Sin atención +48h</div>
+        </div>
+    </div>
+</div>
+
+{{-- Banner alertas críticas --}}
+@if($alertas['urgentes'] > 0 || $alertas['sla_vencido'] > 0)
+<div class="relative overflow-hidden rounded-xl mb-8 border border-red-200 dark:border-red-900 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 px-5 py-4 flex flex-wrap items-center gap-4 anim-fade no-print">
+    <div class="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center flex-shrink-0 shadow shadow-red-300 dark:shadow-red-900">
+        <svg class="w-4 h-4 text-white animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+    </div>
+    <div class="flex-1">
+        <p class="text-sm font-bold text-red-700 dark:text-red-300">Atención requerida</p>
+        <p class="text-xs text-red-600/80 dark:text-red-400 mt-0.5">
+            @if($alertas['urgentes'] > 0)<span class="font-semibold">{{ $alertas['urgentes'] }} caso(s) urgente(s)</span>@endif
+            @if($alertas['urgentes'] > 0 && $alertas['sla_vencido'] > 0) · @endif
+            @if($alertas['sla_vencido'] > 0)<span class="font-semibold">{{ $alertas['sla_vencido'] }} caso(s) con SLA vencido</span>@endif
+            requieren atención inmediata.
+        </p>
+    </div>
+    <a href="{{ route('filament.admin.resources.casos.index', ['tableFilters[estado][value]' => 'pendiente']) }}"
+       class="text-xs font-bold text-red-600 dark:text-red-300 px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all whitespace-nowrap">
+        Ver casos →
+    </a>
+</div>
+@endif
             :class="activeTab === 'table' ? 'tab-active' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'"
             class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
@@ -496,6 +709,12 @@ wire:key="reportes-panel"
             class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
         Exportar
+    </button>
+    <button @click="activeTab = 'psicologos'; $nextTick(() => initCharts())"
+            :class="activeTab === 'psicologos' ? 'tab-active' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'"
+            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Psicólogos
     </button>
 </div>
 
@@ -708,6 +927,84 @@ wire:key="reportes-panel"
         </div>
 
     </div>
+
+    {{-- Top Escuelas --}}
+    @php $escuelas = $this->topEscuelas; $maxEsc = collect($escuelas)->max('total') ?: 1; @endphp
+    @if(!empty($escuelas))
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6 chart-card anim-fade d7">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/40 dark:to-purple-900/40 flex items-center justify-center">
+                <svg class="w-4.5 h-4.5 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-700 dark:text-gray-200">Top Escuelas con más casos</h3>
+                <p class="text-xs text-gray-400">Instituciones con mayor número de reportes</p>
+            </div>
+        </div>
+        <div class="space-y-3">
+            @foreach($escuelas as $idx => $esc)
+                @php $pct = round(($esc['total'] / $maxEsc) * 100); @endphp
+                <div class="anim-slide d{{ min($idx + 2, 8) }}">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-6 h-6 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300 text-xs font-black flex items-center justify-center">{{ $idx + 1 }}</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate max-w-xs">{{ $esc['escuela'] }}</span>
+                        </div>
+                        <span class="text-sm font-black text-violet-600 dark:text-violet-400 tabular-nums ml-3">{{ $esc['total'] }}</span>
+                    </div>
+                    <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                        <div class="bg-gradient-to-r from-violet-400 to-purple-500 h-2 rounded-full progress-bar" style="width:{{ $pct }}%"></div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    {{-- Distribución por Prioridad --}}
+    @php $prioridades = $this->distribucionPrioridad; @endphp
+    @if(!empty($prioridades))
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6 chart-card anim-fade d8">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/40 dark:to-red-900/40 flex items-center justify-center">
+                <svg class="w-4.5 h-4.5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-700 dark:text-gray-200">Distribución por Prioridad</h3>
+                <p class="text-xs text-gray-400">Escala de criticidad de los casos activos</p>
+            </div>
+        </div>
+        @php
+            $priColores = ['baja' => 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400', 'normal' => 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', 'alta' => 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300', 'urgente' => 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300'];
+            $priHex    = ['baja' => '#6b7280', 'normal' => '#3b82f6', 'alta' => '#f97316', 'urgente' => '#ef4444'];
+            $maxPri    = collect($prioridades)->max('total') ?: 1;
+        @endphp
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            @foreach($prioridades as $pri)
+                @php $pct = round(($pri['total'] / $maxPri) * 100); @endphp
+                <div class="rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold {{ $priColores[$pri['prioridad']] ?? 'bg-gray-100 text-gray-600' }}">
+                            {{ ucfirst($pri['prioridad']) }}
+                        </span>
+                        <div class="text-right">
+                            <span class="text-xl font-black" style="color:{{ $priHex[$pri['prioridad']] ?? '#6b7280' }}">{{ $pri['total'] }}</span>
+                            <span class="text-xs text-gray-400 ml-1">{{ $pri['porcentaje'] }}%</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+                        <div class="h-2 rounded-full progress-bar" style="background:{{ $priHex[$pri['prioridad']] ?? '#6b7280' }};width:{{ $pct }}%"></div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
 </div>
 
 {{-- ═══════════════════════════════════════════
@@ -804,6 +1101,76 @@ wire:key="reportes-panel"
             </div>
         </div>
         <div style="height:{{ max(count($this->porRegion) * 45, 200) }}px"><canvas id="regionChart"></canvas></div>
+    </div>
+    @endif
+
+    {{-- Actividad últimos 14 días --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6 chart-card">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-900/40 dark:to-cyan-900/40 flex items-center justify-center">
+                <svg class="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-700 dark:text-gray-200">Actividad — Últimos 14 días</h3>
+                <p class="text-xs text-gray-400">Nuevos casos por día en las últimas dos semanas</p>
+            </div>
+        </div>
+        <div style="height:200px"><canvas id="chart14d"></canvas></div>
+    </div>
+
+    {{-- Tasa de Resolución por Mes --}}
+    @if(!empty($this->tasasResolucion))
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6 chart-card">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/40 dark:to-green-900/40 flex items-center justify-center">
+                <svg class="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-700 dark:text-gray-200">Tasa de Resolución por Mes</h3>
+                <p class="text-xs text-gray-400">Porcentaje de casos resueltos/cerrados por mes <span class="text-emerald-500 font-semibold">≥70% bueno</span> · <span class="text-amber-500 font-semibold">40–70% regular</span> · <span class="text-red-500 font-semibold">&lt;40% crítico</span></p>
+            </div>
+        </div>
+        <div style="height:260px"><canvas id="resolucionChart"></canvas></div>
+    </div>
+    @endif
+
+    {{-- Distribución prioridad donut --}}
+    @if(!empty($this->distribucionPrioridad))
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6 chart-card">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/40 dark:to-red-900/40 flex items-center justify-center">
+                <svg class="w-4.5 h-4.5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-700 dark:text-gray-200">Distribución por Prioridad</h3>
+                <p class="text-xs text-gray-400">Proporción de casos según nivel de criticidad</p>
+            </div>
+        </div>
+        <div style="height:240px"><canvas id="prioridadChart"></canvas></div>
+    </div>
+    @endif
+
+    {{-- Top Escuelas Chart --}}
+    @if(!empty($this->topEscuelas))
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6 chart-card">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/40 dark:to-purple-900/40 flex items-center justify-center">
+                <svg class="w-4.5 h-4.5 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-700 dark:text-gray-200">Top Escuelas</h3>
+                <p class="text-xs text-gray-400">Instituciones con mayor número de casos reportados</p>
+            </div>
+        </div>
+        <div style="height:{{ max(count($this->topEscuelas) * 40, 200) }}px"><canvas id="escuelasChart"></canvas></div>
     </div>
     @endif
 
@@ -1028,11 +1395,185 @@ wire:key="reportes-panel"
                 </svg>
                 <div class="text-xs text-gray-500 dark:text-gray-400">
                     <p class="font-semibold text-gray-600 dark:text-gray-300 mb-1">Nota sobre exportaciones</p>
-                    <p>Los reportes incluyen todos los datos filtrados: código, tipo de violencia, estado, denunciante, psicólogo asignado, región, escuela, y fechas. Los archivos CSV y Excel se generan con codificación UTF-8 para correcta visualización de caracteres especiales.</p>
+                    <p>Los reportes incluyen todos los datos filtrados: código, tipo de violencia, estado, prioridad, denunciante, psicólogo asignado, región, provincia, escuela, fechas, SLA vencido y escalado. Los archivos CSV y Excel se generan con codificación UTF-8 para correcta visualización de caracteres especiales.</p>
                 </div>
             </div>
         </div>
     </div>
+
+</div>
+
+{{-- ═══════════════════════════════════════════
+     TAB: PSICÓLOGOS
+═══════════════════════════════════════════ --}}
+<div x-show="activeTab === 'psicologos'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+
+    @php
+        $psics = $this->porPsicologo;
+        $dispColor = [
+            'disponible'  => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+            'ocupado'     => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+            'no_disponible' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+        ];
+        $dispLabel = ['disponible' => 'Disponible', 'ocupado' => 'Ocupado', 'no_disponible' => 'No disponible'];
+        $maxTotal  = collect($psics)->map(fn ($p) => (int)($p['total'] ?? 0))->max() ?: 1;
+    @endphp
+
+    {{-- Summary cards --}}
+    @php
+        $totalPsics    = count($psics);
+        $totalActivas  = array_sum(array_column($psics, 'activas'));
+        $totalFin      = array_sum(array_column($psics, 'finalizadas'));
+        $disponibles   = collect($psics)->where('disponibilidad', 'disponible')->count();
+    @endphp
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        @foreach([
+            ['label' => 'Psicólogos activos', 'val' => $totalPsics,   'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', 'from' => 'from-indigo-500', 'to' => 'to-indigo-700'],
+            ['label' => 'Disponibles ahora',  'val' => $disponibles,  'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', 'from' => 'from-emerald-500', 'to' => 'to-emerald-700'],
+            ['label' => 'Asignaciones activas','val' => $totalActivas, 'icon' => 'M13 10V3L4 14h7v7l9-11h-7z',                                                'from' => 'from-amber-500',   'to' => 'to-amber-700'],
+            ['label' => 'Casos finalizados',   'val' => $totalFin,    'icon' => 'M5 13l4 4L19 7',                                                            'from' => 'from-blue-500',    'to' => 'to-blue-700'],
+        ] as $idx => $kpi)
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br {{ $kpi['from'] }} {{ $kpi['to'] }} p-5 shadow-lg kpi-card anim-scale d{{ $idx + 1 }}">
+                <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/10"></div>
+                <div class="relative z-10">
+                    <div class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center mb-3">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $kpi['icon'] }}"/>
+                        </svg>
+                    </div>
+                    <div class="text-3xl font-black text-white">{{ $kpi['val'] }}</div>
+                    <div class="text-white/75 text-xs mt-1 font-medium">{{ $kpi['label'] }}</div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- Psicólogos detailed table --}}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+        <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+            <h3 class="font-bold text-gray-700 dark:text-gray-200">Detalle por Psicólogo</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Rendimiento y carga de trabajo individual</p>
+        </div>
+        @if(empty($psics))
+            <div class="py-16 text-center">
+                <p class="text-gray-400 text-sm">Sin psicólogos registrados en el sistema.</p>
+            </div>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 dark:bg-gray-900/40">
+                            <th class="px-5 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
+                            <th class="px-5 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Psicólogo</th>
+                            <th class="px-5 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Especialidad</th>
+                            <th class="px-5 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Disponibilidad</th>
+                            <th class="px-5 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Activas</th>
+                            <th class="px-5 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Finalizadas</th>
+                            <th class="px-5 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
+                            <th class="px-5 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Carga</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
+                        @foreach($psics as $idx => $p)
+                            @php
+                                $activas    = (int) ($p['activas'] ?? 0);
+                                $finalizadas= (int) ($p['finalizadas'] ?? 0);
+                                $total      = (int) ($p['total'] ?? ($activas + $finalizadas));
+                                $nombre     = trim((string) ($p['nombre'] ?? 'Sin nombre'));
+                                $pct        = round(($total / $maxTotal) * 100);
+                                $disp       = $p['disponibilidad'] ?? null;
+                            @endphp
+                            <tr class="hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-colors">
+                                <td class="px-5 py-4 text-xs text-gray-400 tabular-nums">{{ $idx + 1 }}</td>
+                                <td class="px-5 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-xs font-black flex-shrink-0 shadow-sm">
+                                            {{ strtoupper(mb_substr($nombre, 0, 2)) }}
+                                        </div>
+                                        <span class="font-semibold text-gray-800 dark:text-gray-200">{{ $nombre }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-5 py-4 text-gray-500 dark:text-gray-400 text-xs">
+                                    {{ $p['especialidad'] ?? '—' }}
+                                </td>
+                                <td class="px-5 py-4 text-center">
+                                    @if($disp)
+                                        <span class="px-2.5 py-1 rounded-full text-xs font-bold {{ $dispColor[$disp] ?? 'bg-gray-100 text-gray-500' }}">
+                                            {{ $dispLabel[$disp] ?? ucfirst($disp) }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-300 text-xs">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-5 py-4 text-center">
+                                    <span class="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-black text-sm">{{ $activas }}</span>
+                                </td>
+                                <td class="px-5 py-4 text-center">
+                                    <span class="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-black text-sm">{{ $finalizadas }}</span>
+                                </td>
+                                <td class="px-5 py-4 text-center font-black text-gray-700 dark:text-gray-200">{{ $total }}</td>
+                                <td class="px-5 py-4 min-w-[120px]">
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                                            <div class="bg-gradient-to-r from-indigo-400 to-violet-500 h-2 rounded-full progress-bar" style="width:{{ $pct }}%"></div>
+                                        </div>
+                                        <span class="text-xs text-gray-400 tabular-nums w-7 text-right">{{ $pct }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+
+    {{-- Efficiency comparison: activas vs finalizadas horizontal bars --}}
+    @if(!empty($psics))
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/40 dark:to-violet-900/40 flex items-center justify-center">
+                <svg class="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-700 dark:text-gray-200">Comparativa: Activas vs Finalizadas</h3>
+                <p class="text-xs text-gray-400">Proporción de eficiencia por profesional</p>
+            </div>
+            <div class="flex items-center gap-4 ml-auto text-xs">
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-emerald-400"></span> Activas</span>
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-blue-400"></span> Finalizadas</span>
+            </div>
+        </div>
+        <div class="space-y-4">
+            @foreach($psics as $p)
+                @php
+                    $activas    = (int) ($p['activas'] ?? 0);
+                    $finalizadas= (int) ($p['finalizadas'] ?? 0);
+                    $totPsic    = $activas + $finalizadas ?: 1;
+                    $pctAct     = round(($activas / $totPsic) * 100);
+                    $pctFin     = round(($finalizadas / $totPsic) * 100);
+                    $nombre     = trim((string) ($p['nombre'] ?? 'Sin nombre'));
+                @endphp
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate max-w-xs">{{ $nombre }}</span>
+                        <span class="text-xs text-gray-400 tabular-nums">{{ $activas }}A / {{ $finalizadas }}F</span>
+                    </div>
+                    <div class="flex h-3 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
+                        @if($activas > 0)
+                        <div class="bg-emerald-400 transition-all" style="width:{{ $pctAct }}%" title="Activas: {{ $activas }}"></div>
+                        @endif
+                        @if($finalizadas > 0)
+                        <div class="bg-blue-400 transition-all" style="width:{{ $pctFin }}%" title="Finalizadas: {{ $finalizadas }}"></div>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 
 </div>
 

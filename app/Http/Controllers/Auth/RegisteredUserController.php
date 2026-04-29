@@ -34,7 +34,7 @@ class RegisteredUserController extends Controller
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'rol'      => ['required', 'in:alumno,docente,psicologo,admin'],
+            'rol'      => ['required', 'in:alumno,docente,psicologo'],
         ], [
             'rol.required' => 'Debes seleccionar un tipo de perfil.',
             'rol.in'       => 'El tipo de perfil seleccionado no es válido.',

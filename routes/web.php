@@ -5,11 +5,43 @@ use App\Http\Controllers\ControladorDenuncias;
 use App\Http\Controllers\ControladorSeguimiento;
 use App\Http\Controllers\ProfileController;
 use App\Models\Caso;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// ─── Página de bienvenida ──────────────────────────────────────────────────────
-Route::get('/', function () {
-    return view('welcome');
+// ─── Página de bienvenida (con consulta de expediente inline) ─────────────────
+Route::get('/', function (Request $request) {
+    $resultados = null;
+    $busqueda   = null;
+    $tipo       = null;
+    $buscado    = false;
+
+    if ($request->filled('busqueda')) {
+        $validated = $request->validate([
+            'busqueda' => 'required|string|min:2|max:100',
+            'tipo'     => 'required|in:codigo,nombre',
+        ]);
+        $busqueda = trim($validated['busqueda']);
+        $tipo     = $validated['tipo'];
+        $buscado  = true;
+
+        $query = Caso::select([
+            'id', 'codigo_caso', 'tipo_violencia', 'estado', 'prioridad',
+            'es_anonimo', 'escuela_nombre', 'distrito', 'provincia', 'region',
+            'created_at', 'updated_at',
+        ]);
+
+        if ($tipo === 'codigo') {
+            $query->where('codigo_caso', strtoupper($busqueda));
+        } else {
+            $query->whereHas('denunciante', function ($q) use ($busqueda) {
+                $q->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($busqueda) . '%']);
+            })->where('es_anonimo', false)->orderByDesc('created_at');
+        }
+
+        $resultados = $query->paginate(5)->withQueryString();
+    }
+
+    return view('welcome', compact('resultados', 'busqueda', 'tipo', 'buscado'));
 });
 
 // ─── Consulta pública de expedientes ──────────────────────────────────────────
