@@ -37,7 +37,7 @@ WORKDIR /app
 
 COPY . .
 
-COPY .env.example .env
+RUN [ -f .env ] || cp .env.example .env
 
 RUN mkdir -p /app/storage/logs /app/storage/framework/cache \
         /app/storage/framework/sessions /app/storage/framework/views \
