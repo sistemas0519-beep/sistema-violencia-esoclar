@@ -100,8 +100,8 @@ class FullDatabaseSeeder extends Seeder
             'escuela_nombre'    => 'I.E. Nuestra Señora de Guadalupe',
             'codigo_modular'    => '0302368',
             'es_sensible'       => false,
-            'nivel_urgencia'    => 'urgente',
-            'area_tematica'     => 'convivencia_escolar',
+            'nivel_urgencia'    => 'inmediata',
+            'area_tematica'     => 'acoso_escolar',
         ]);
 
         $caso2 = \App\Models\Caso::firstOrCreate(['codigo_caso' => 'VIO-2026-0002'], [
@@ -119,8 +119,8 @@ class FullDatabaseSeeder extends Seeder
             'escuela_nombre'    => 'I.E. Rosa de Santa María',
             'codigo_modular'    => '0302376',
             'es_sensible'       => true,
-            'nivel_sensibilidad' => 'alto',
-            'nivel_urgencia'    => 'muy_urgente',
+            'nivel_sensibilidad' => 'sensible',
+            'nivel_urgencia'    => 'inmediata',
             'area_tematica'     => 'ciberacoso',
         ]);
 
@@ -128,7 +128,7 @@ class FullDatabaseSeeder extends Seeder
             'tipo_violencia'    => 'fisica',
             'descripcion'       => 'El estudiante reporta que un grupo de compañeros lo golpea en el camino a casa. Presenta marcas visibles.',
             'estado'            => 'pendiente',
-            'prioridad'         => 'critica',
+            'prioridad'         => 'urgente',
             'es_anonimo'        => false,
             'denunciante_id'    => $docente1->id,
             'asignado_a'        => null,
@@ -139,8 +139,8 @@ class FullDatabaseSeeder extends Seeder
             'escuela_nombre'    => 'I.E. San Marcos',
             'codigo_modular'    => '0302384',
             'es_sensible'       => true,
-            'nivel_sensibilidad' => 'muy_alto',
-            'nivel_urgencia'    => 'muy_urgente',
+            'nivel_sensibilidad' => 'altamente_confidencial',
+            'nivel_urgencia'    => 'inmediata',
             'area_tematica'     => 'violencia_fisica',
         ]);
 
@@ -159,8 +159,8 @@ class FullDatabaseSeeder extends Seeder
             'escuela_nombre'    => 'I.E. María Auxiliadora',
             'codigo_modular'    => '0302392',
             'es_sensible'       => false,
-            'nivel_urgencia'    => 'moderado',
-            'area_tematica'     => 'salud_mental',
+            'nivel_urgencia'    => 'media',
+            'area_tematica'     => 'otro',
         ]);
 
         $caso5 = \App\Models\Caso::firstOrCreate(['codigo_caso' => 'VIO-2026-0005'], [
@@ -178,8 +178,8 @@ class FullDatabaseSeeder extends Seeder
             'escuela_nombre'    => 'I.E. Inmaculada',
             'codigo_modular'    => '0302400',
             'es_sensible'       => true,
-            'nivel_sensibilidad' => 'alto',
-            'nivel_urgencia'    => 'urgente',
+            'nivel_sensibilidad' => 'sensible',
+            'nivel_urgencia'    => 'inmediata',
             'area_tematica'     => 'discriminacion',
         ]);
 
@@ -198,8 +198,8 @@ class FullDatabaseSeeder extends Seeder
             'escuela_nombre'    => 'I.E. La Salle',
             'codigo_modular'    => '0302418',
             'es_sensible'       => false,
-            'nivel_urgencia'    => 'bajo',
-            'area_tematica'     => 'convivencia_escolar',
+            'nivel_urgencia'    => 'baja',
+            'area_tematica'     => 'acoso_escolar',
         ]);
 
         // ──────────────────────────────────────────────────────────────────────
@@ -225,7 +225,7 @@ class FullDatabaseSeeder extends Seeder
                 'paciente_id'          => $alumno2->id,
                 'notas'                => 'Caso de ciberacoso con impacto emocional severo.',
                 'fecha_inicio'         => now()->subDays(18)->toDateString(),
-                'frecuencia_atencion'  => 'bisemanal',
+                'frecuencia_atencion'  => 'semanal',
                 'dia_atencion'         => 'miercoles',
                 'hora_atencion'        => '14:00:00',
                 'estado'               => 'activa',
@@ -288,7 +288,7 @@ class FullDatabaseSeeder extends Seeder
             [
                 'paciente_id'     => $alumno1->id,
                 'asignacion_id'   => $asig1->id,
-                'tipo_sesion'     => 'terapia_individual',
+                'tipo_sesion'     => 'intervencion',
                 'modalidad'       => 'presencial',
                 'estado'          => 'completada',
                 'hora_inicio'     => '10:00:00',
@@ -305,7 +305,7 @@ class FullDatabaseSeeder extends Seeder
             [
                 'paciente_id'       => $alumno1->id,
                 'asignacion_id'     => $asig1->id,
-                'tipo_sesion'       => 'terapia_individual',
+                'tipo_sesion'       => 'intervencion',
                 'modalidad'         => 'presencial',
                 'estado'            => 'programada',
                 'hora_inicio'       => '10:00:00',
@@ -338,7 +338,7 @@ class FullDatabaseSeeder extends Seeder
             [
                 'paciente_id'     => $alumno4->id,
                 'asignacion_id'   => $asig3->id,
-                'tipo_sesion'     => 'terapia_individual',
+                'tipo_sesion'     => 'intervencion',
                 'modalidad'       => 'presencial',
                 'estado'          => 'completada',
                 'hora_inicio'     => '11:00:00',
@@ -357,8 +357,8 @@ class FullDatabaseSeeder extends Seeder
             ['caso_id' => $caso1->id, 'fecha_seguimiento' => now()->subDays(13)],
             [
                 'responsable_id'    => $psicologa1->id,
-                'accion'            => 'Primera sesión completada. Se asignó psicóloga al caso.',
-                'notas'             => 'El alumno se mostró cooperativo. Se coordinó con docente tutor para observación en aula.',
+                'accion'            => 'intervencion',
+                'notas'             => 'Primera sesión completada. Se asignó psicóloga al caso. El alumno se mostró cooperativo. Se coordinó con docente tutor para observación en aula.'
             ]
         );
 
@@ -366,8 +366,8 @@ class FullDatabaseSeeder extends Seeder
             ['caso_id' => $caso1->id, 'fecha_seguimiento' => now()->subDays(6)],
             [
                 'responsable_id'    => $psicologa1->id,
-                'accion'            => 'Segunda sesión realizada. Coordinación con dirección.',
-                'notas'             => 'Se reportó mejora en el estado emocional. Dirección fue informada para tomar medidas con el agresor.',
+                'accion'            => 'reunion',
+                'notas'             => 'Segunda sesión realizada. Coordinación con dirección. Se reportó mejora en el estado emocional. Dirección fue informada para tomar medidas con el agresor.'
             ]
         );
 
@@ -375,8 +375,8 @@ class FullDatabaseSeeder extends Seeder
             ['caso_id' => $caso2->id, 'fecha_seguimiento' => now()->subDays(17)],
             [
                 'responsable_id'    => $psicologa1->id,
-                'accion'            => 'Evaluación inicial realizada. Coordinación con padres.',
-                'notas'             => 'Se contactó con los padres para informar sobre el caso. Se solicitó apoyo familiar.',
+                'accion'            => 'reunion',
+                'notas'             => 'Evaluación inicial realizada. Coordinación con padres. Se contactó con los padres para informar sobre el caso. Se solicitó apoyo familiar.'
             ]
         );
 
@@ -384,8 +384,8 @@ class FullDatabaseSeeder extends Seeder
             ['caso_id' => $caso3->id, 'fecha_seguimiento' => now()->subDays(2)],
             [
                 'responsable_id'    => $admin->id,
-                'accion'            => 'Caso recibido. Pendiente de asignación urgente.',
-                'notas'             => 'Caso de violencia física activo. Requiere atención inmediata. Se notificó a dirección y padres.',
+                'accion'            => 'otro',
+                'notas'             => 'Caso recibido. Pendiente de asignación urgente. Caso de violencia física activo. Requiere atención inmediata. Se notificó a dirección y padres.'
             ]
         );
 
@@ -393,8 +393,8 @@ class FullDatabaseSeeder extends Seeder
             ['caso_id' => $caso4->id, 'fecha_seguimiento' => now()->subDays(19)],
             [
                 'responsable_id'    => $psicologo2->id,
-                'accion'            => 'Inicio de intervención psicológica.',
-                'notas'             => 'Se coordinó con docentes para observación del grupo. Plan de mediación grupal en preparación.',
+                'accion'            => 'intervencion',
+                'notas'             => 'Inicio de intervención psicológica. Se coordinó con docentes para observación del grupo. Plan de mediación grupal en preparación.'
             ]
         );
 
@@ -402,8 +402,8 @@ class FullDatabaseSeeder extends Seeder
             ['caso_id' => $caso5->id, 'fecha_seguimiento' => now()->subDays(55)],
             [
                 'responsable_id'    => $psicologa1->id,
-                'accion'            => 'Inicio de intervención. Reunión con dirección.',
-                'notas'             => 'Se implementó protocolo de no discriminación. Caso derivado a consejo escolar.',
+                'accion'            => 'reunion',
+                'notas'             => 'Inicio de intervención. Reunión con dirección. Se implementó protocolo de no discriminación. Caso derivado a consejo escolar.'
             ]
         );
 
@@ -411,8 +411,8 @@ class FullDatabaseSeeder extends Seeder
             ['caso_id' => $caso5->id, 'fecha_seguimiento' => now()->subDays(20)],
             [
                 'responsable_id'    => $psicologa1->id,
-                'accion'            => 'Cierre del caso con resultados positivos.',
-                'notas'             => 'La situación mejoró significativamente. Se implementaron talleres de inclusión. Caso resuelto.',
+                'accion'            => 'cierre',
+                'notas'             => 'Cierre del caso con resultados positivos. La situación mejoró significativamente. Se implementaron talleres de inclusión. Caso resuelto.',
             ]
         );
 
@@ -425,7 +425,7 @@ class FullDatabaseSeeder extends Seeder
                 'caso_id'               => $caso1->id,
                 'profesional_id'        => $psicologa1->id,
                 'sesion_id'             => $sesion1->id,
-                'tipo_intervencion'     => 'psicologica',
+                'tipo_intervencion'     => 'acompanamiento',
                 'estado'                => 'completada',
                 'descripcion'           => 'Intervención psicológica individual para manejo del acoso verbal.',
                 'acciones_realizadas'   => 'Evaluación psicológica inicial, técnicas de asertividad, desarrollo de habilidades sociales.',
@@ -444,13 +444,13 @@ class FullDatabaseSeeder extends Seeder
             [
                 'caso_id'               => $caso2->id,
                 'profesional_id'        => $psicologa1->id,
-                'tipo_intervencion'     => 'psicologica',
+                'tipo_intervencion'     => 'acompanamiento',
                 'estado'                => 'en_curso',
                 'descripcion'           => 'Intervención por ciberacoso con componente de trauma.',
                 'acciones_realizadas'   => 'Evaluación del impacto emocional. Técnicas de regulación emocional. Coordinación con padres.',
                 'resultados_observados' => 'Identificados patrones de respuesta al estrés. Se trabajó en estrategias de afrontamiento.',
                 'recomendaciones'       => 'Apoyo familiar activo. Restricción temporal de redes sociales.',
-                'efectividad'           => 'poco_efectiva',
+                'efectividad'           => 'parcial',
                 'fecha_inicio'          => now()->subDays(18)->toDateString(),
                 'requiere_seguimiento'  => true,
                 'proximo_seguimiento'   => now()->addDays(3)->toDateString(),
@@ -463,7 +463,7 @@ class FullDatabaseSeeder extends Seeder
                 'caso_id'               => $caso4->id,
                 'profesional_id'        => $psicologo2->id,
                 'sesion_id'             => $sesion4->id,
-                'tipo_intervencion'     => 'psicologica',
+                'tipo_intervencion'     => 'acompanamiento',
                 'estado'                => 'en_curso',
                 'descripcion'           => 'Terapia cognitivo-conductual para manejo de ansiedad social.',
                 'acciones_realizadas'   => 'Reestructuración cognitiva, entrenamiento en habilidades sociales, exposición gradual.',
@@ -512,7 +512,7 @@ class FullDatabaseSeeder extends Seeder
                 'creado_por' => $psicologo2->id,
                 'titulo'     => 'Técnicas de Relajación para Adolescentes',
                 'contenido'  => 'Conjunto de técnicas de respiración y relajación adaptadas para adolescentes en situación de estrés o ansiedad. Incluye ejercicios prácticos y materiales descargables.',
-                'categoria'  => 'tecnica_intervencion',
+                'categoria'  => 'guia_intervencion',
                 'etiquetas'  => json_encode(['relajación', 'adolescentes', 'ansiedad', 'técnicas']),
                 'es_publico' => true,
                 'destacado'  => false,
@@ -522,7 +522,7 @@ class FullDatabaseSeeder extends Seeder
                 'creado_por' => $psicologa1->id,
                 'titulo'     => 'Guía para Padres: Señales de Alerta de Ciberacoso',
                 'contenido'  => 'Información práctica para que los padres puedan identificar señales de ciberacoso en sus hijos y cómo actuar. Incluye consejos sobre supervisión digital responsable.',
-                'categoria'  => 'guia',
+                'categoria'  => 'guia_intervencion',
                 'etiquetas'  => json_encode(['ciberacoso', 'padres', 'señales', 'internet']),
                 'es_publico' => true,
                 'destacado'  => true,
@@ -532,7 +532,7 @@ class FullDatabaseSeeder extends Seeder
                 'creado_por' => $admin->id,
                 'titulo'     => 'Directorio de Servicios de Apoyo Psicológico Lima',
                 'contenido'  => 'Listado actualizado de servicios de atención psicológica gratuita o de bajo costo en Lima Metropolitana. Incluye hospitales, ONGs y centros comunitarios.',
-                'categoria'  => 'directorio',
+                'categoria'  => 'recurso_externo',
                 'etiquetas'  => json_encode(['directorio', 'Lima', 'apoyo', 'servicios']),
                 'es_publico' => true,
                 'destacado'  => false,
@@ -542,7 +542,7 @@ class FullDatabaseSeeder extends Seeder
                 'creado_por' => $psicologo2->id,
                 'titulo'     => 'Manual de Habilidades Sociales para Estudiantes',
                 'contenido'  => 'Manual interactivo para el desarrollo de habilidades sociales en adolescentes: comunicación asertiva, resolución de conflictos y trabajo en equipo.',
-                'categoria'  => 'material_educativo',
+                'categoria'  => 'material_psicoeducativo',
                 'etiquetas'  => json_encode(['habilidades sociales', 'asertividad', 'conflictos', 'manual']),
                 'es_publico' => true,
                 'destacado'  => true,
@@ -552,7 +552,7 @@ class FullDatabaseSeeder extends Seeder
                 'creado_por' => $psicologa1->id,
                 'titulo'     => 'Ficha de Evaluación Psicológica Inicial - CONFIDENCIAL',
                 'contenido'  => 'Formulario estructurado para la evaluación psicológica inicial de estudiantes afectados por violencia escolar. USO EXCLUSIVO DE PSICÓLOGOS.',
-                'categoria'  => 'formulario',
+                'categoria'  => 'formato',
                 'etiquetas'  => json_encode(['evaluación', 'formulario', 'confidencial', 'psicólogos']),
                 'es_publico' => false,
                 'destacado'  => false,
@@ -574,7 +574,7 @@ class FullDatabaseSeeder extends Seeder
             ['caso_id' => $caso1->id, 'autor_id' => $psicologa1->id],
             [
                 'contenido'   => 'Nota interna: El alumno reveló situación familiar difícil que puede estar contribuyendo a su vulnerabilidad. Se requiere coordinación con servicio social. No compartir con docentes sin autorización.',
-                'visibilidad' => 'psicologo',
+                'visibilidad' => 'psicologos',
                 'es_critica'  => false,
             ]
         );
@@ -583,7 +583,7 @@ class FullDatabaseSeeder extends Seeder
             ['caso_id' => $caso2->id, 'autor_id' => $psicologa1->id],
             [
                 'contenido'   => 'La estudiante menciona que los mensajes provienen de una cuenta falsa posiblemente de un excompañero. Familia está coordinando con la policía. Mantener en reserva.',
-                'visibilidad' => 'psicologo',
+                'visibilidad' => 'psicologos',
                 'es_critica'  => true,
             ]
         );
@@ -592,7 +592,7 @@ class FullDatabaseSeeder extends Seeder
             ['caso_id' => $caso3->id, 'autor_id' => $admin->id],
             [
                 'contenido'   => 'Caso de violencia física. Se tomaron fotografías de las lesiones como evidencia. Padres notificados. Posible derivación a fiscalía de familia si continúa.',
-                'visibilidad' => 'admin',
+                'visibilidad' => 'solo_autor',
                 'es_critica'  => true,
             ]
         );
@@ -633,7 +633,7 @@ class FullDatabaseSeeder extends Seeder
                 'atendido_por'    => $psicologa1->id,
                 'tipo'            => 'orientacion',
                 'descripcion'     => 'Necesito orientación sobre cómo manejar al agresor en el aula sin generar más conflictos.',
-                'estado'          => 'resuelta',
+                'estado'          => 'completada',
                 'prioridad'       => 'media',
                 'motivo'          => 'Orientación pedagógica',
                 'observaciones_resolucion' => 'Se recomienda mantener comunicación discreta con el alumno agresor, establecer límites claros y reportar cualquier nueva incidencia.',
@@ -648,7 +648,7 @@ class FullDatabaseSeeder extends Seeder
             [
                 'codigo'          => 'SOL-2026-0002',
                 'atendido_por'    => $psicologo2->id,
-                'tipo'            => 'capacitacion',
+                'tipo'            => 'seguimiento',
                 'descripcion'     => '¿Podría brindarme capacitación sobre señales tempranas de acoso entre estudiantes?',
                 'estado'          => 'pendiente',
                 'prioridad'       => 'baja',
