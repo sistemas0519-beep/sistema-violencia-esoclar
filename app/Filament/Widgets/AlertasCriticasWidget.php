@@ -7,13 +7,14 @@ use Filament\Widgets\Widget;
 use Illuminate\Contracts\View\View;
 
 /**
- * Widget de alertas de casos críticos en tiempo real.
+ * Widget de alertas de casos criticos en tiempo real.
  */
 class AlertasCriticasWidget extends Widget
 {
     protected static ?int $sort = -1;
+    protected static bool $isLazy = true;
     protected static string $view = 'filament.widgets.alertas-criticas';
-    protected static ?string $pollingInterval = '30s';
+    protected static ?string $pollingInterval = '90s';
     protected int | string | array $columnSpan = 'full';
 
     public function getViewData(): array
@@ -51,3 +52,5 @@ class AlertasCriticasWidget extends Widget
         ];
     }
 }
+
+

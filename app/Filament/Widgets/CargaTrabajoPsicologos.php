@@ -9,9 +9,10 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class CargaTrabajoPsicologos extends BaseWidget
 {
-    protected static ?string $heading = 'Carga de Trabajo - Equipo Psicológico';
+    protected static ?string $heading = 'Carga de Trabajo - Equipo Psicologico';
     protected static ?int $sort = 1;
-    protected static ?string $pollingInterval = '120s';
+    protected static bool $isLazy = true;
+    protected static ?string $pollingInterval = '180s';
 
     public function table(Table $table): Table
     {
@@ -28,7 +29,7 @@ class CargaTrabajoPsicologos extends BaseWidget
             )
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Psicólogo')
+                    ->label('Psicologo')
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
@@ -36,7 +37,7 @@ class CargaTrabajoPsicologos extends BaseWidget
                 Tables\Columns\TextColumn::make('especialidad')
                     ->label('Especialidad')
                     ->limit(30)
-                    ->default('—'),
+                    ->default('-'),
 
                 Tables\Columns\TextColumn::make('disponibilidad')
                     ->label('Disponibilidad')
@@ -67,3 +68,5 @@ class CargaTrabajoPsicologos extends BaseWidget
             ->striped();
     }
 }
+
+

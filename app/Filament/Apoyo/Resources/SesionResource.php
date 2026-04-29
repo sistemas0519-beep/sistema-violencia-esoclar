@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 class SesionResource extends Resource
 {
@@ -25,9 +26,16 @@ class SesionResource extends Resource
     protected static ?string $pluralModelLabel = 'Sesiones';
     protected static ?int $navigationSort = 2;
 
+    protected static function getNavigationBadgeCount(): int
+    {
+        $userId = auth()->id();
+
+        return Cache::remember("nav_badge:sesiones_hoy:{$userId}", 60, fn (): int => (int) Sesion::hoy()->delProfesional($userId)->count());
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return (string) Sesion::hoy()->delProfesional(auth()->id())->count();
+        return (string) static::getNavigationBadgeCount();
     }
 
     public static function getNavigationBadgeColor(): string|array|null

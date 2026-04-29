@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 class IntervencionResource extends Resource
 {
@@ -23,9 +24,16 @@ class IntervencionResource extends Resource
     protected static ?string $pluralModelLabel = 'Intervenciones';
     protected static ?int $navigationSort = 3;
 
+    protected static function getNavigationBadgeCount(): int
+    {
+        $userId = auth()->id();
+
+        return Cache::remember("nav_badge:intervenciones:{$userId}", 120, fn (): int => (int) Intervencion::activas()->delProfesional($userId)->count());
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return (string) Intervencion::activas()->delProfesional(auth()->id())->count();
+        return (string) static::getNavigationBadgeCount();
     }
 
     public static function getEloquentQuery(): Builder

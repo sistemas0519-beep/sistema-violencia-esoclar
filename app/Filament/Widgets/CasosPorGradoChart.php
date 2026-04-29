@@ -6,13 +6,14 @@ use App\Models\Caso;
 use Filament\Widgets\ChartWidget;
 
 /**
- * Gráfico de barras horizontales: Casos por grado y grupo escolar.
+ * Grafico de barras horizontales: Casos por grado y grupo escolar.
  */
 class CasosPorGradoChart extends ChartWidget
 {
     protected static ?string $heading = 'Casos por Grado/Grupo Escolar';
     protected static string $color    = 'info';
     protected static ?int $sort       = 5;
+    protected static bool $isLazy = true;
     protected static ?string $pollingInterval = '300s';
 
     protected function getData(): array
@@ -65,3 +66,4 @@ class CasosPorGradoChart extends ChartWidget
         ];
     }
 }
+

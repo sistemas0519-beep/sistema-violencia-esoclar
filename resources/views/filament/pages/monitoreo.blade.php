@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-<div wire:poll.30s wire:key="monitoreo-panel">
+<div wire:poll.60s wire:key="monitoreo-panel">
 
     {{-- ─── Header ─────────────────────────────────────────────────────── --}}
     <div class="relative overflow-hidden rounded-2xl mb-8 bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-700 shadow-xl">

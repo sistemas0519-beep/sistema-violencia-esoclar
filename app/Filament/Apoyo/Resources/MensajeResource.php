@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 class MensajeResource extends Resource
 {
@@ -23,14 +24,21 @@ class MensajeResource extends Resource
     protected static ?string $pluralModelLabel = 'Mensajes';
     protected static ?int $navigationSort = 1;
 
+    protected static function getNavigationBadgeCount(): int
+    {
+        $userId = auth()->id();
+
+        return Cache::remember("nav_badge:mensajes_no_leidos:{$userId}", 60, fn (): int => (int) Mensaje::noLeidos($userId)->count());
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return (string) Mensaje::noLeidos(auth()->id())->count();
+        return (string) static::getNavigationBadgeCount();
     }
 
     public static function getNavigationBadgeColor(): string|array|null
     {
-        $count = Mensaje::noLeidos(auth()->id())->count();
+        $count = static::getNavigationBadgeCount();
         return $count > 0 ? 'danger' : 'success';
     }
 

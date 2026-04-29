@@ -7,13 +7,14 @@ use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 
 /**
- * Gráfico de líneas: Tendencia de casos de los últimos 12 meses.
+ * Grafico de lineas: Tendencia de casos de los ultimos 12 meses.
  */
 class TendenciaMensualChart extends ChartWidget
 {
     protected static ?string $heading = 'Tendencia Mensual de Casos';
     protected static string $color    = 'primary';
     protected static ?int $sort       = 3;
+    protected static bool $isLazy = true;
     protected static ?string $pollingInterval = '300s';
 
     public ?string $filter = '12';
@@ -21,9 +22,9 @@ class TendenciaMensualChart extends ChartWidget
     protected function getFilters(): ?array
     {
         return [
-            '3'  => 'Últimos 3 meses',
-            '6'  => 'Últimos 6 meses',
-            '12' => 'Últimos 12 meses',
+            '3'  => 'Ultimos 3 meses',
+            '6'  => 'Ultimos 6 meses',
+            '12' => 'Ultimos 12 meses',
         ];
     }
 
@@ -99,3 +100,4 @@ class TendenciaMensualChart extends ChartWidget
         ];
     }
 }
+

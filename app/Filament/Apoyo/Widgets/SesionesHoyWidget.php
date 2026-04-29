@@ -10,9 +10,10 @@ use Filament\Widgets\TableWidget as BaseWidget;
 class SesionesHoyWidget extends BaseWidget
 {
     protected static ?int $sort = 2;
+    protected static bool $isLazy = true;
     protected int|string|array $columnSpan = 'full';
     protected static ?string $heading = 'Sesiones de Hoy';
-    protected static ?string $pollingInterval = '60s';
+    protected static ?string $pollingInterval = '120s';
 
     public function table(Table $table): Table
     {
@@ -63,7 +64,7 @@ class SesionesHoyWidget extends BaseWidget
                     ]),
 
                 Tables\Columns\TextColumn::make('lugar')
-                    ->default('—')
+                    ->default('-')
                     ->toggleable(),
             ])
             ->paginated(false)
@@ -72,3 +73,5 @@ class SesionesHoyWidget extends BaseWidget
             ->striped();
     }
 }
+
+

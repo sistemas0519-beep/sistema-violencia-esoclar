@@ -10,9 +10,10 @@ use Filament\Widgets\TableWidget as BaseWidget;
 class CargaTrabajoWidget extends BaseWidget
 {
     protected static ?int $sort = 4;
+    protected static bool $isLazy = true;
     protected int|string|array $columnSpan = '1';
     protected static ?string $heading = 'Carga de Trabajo del Equipo';
-    protected static ?string $pollingInterval = '120s';
+    protected static ?string $pollingInterval = '180s';
 
     public function table(Table $table): Table
     {
@@ -61,3 +62,5 @@ class CargaTrabajoWidget extends BaseWidget
             ->striped();
     }
 }
+
+

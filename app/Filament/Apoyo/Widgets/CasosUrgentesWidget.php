@@ -10,9 +10,10 @@ use Filament\Widgets\TableWidget as BaseWidget;
 class CasosUrgentesWidget extends BaseWidget
 {
     protected static ?int $sort = 3;
+    protected static bool $isLazy = true;
     protected int|string|array $columnSpan = 'full';
     protected static ?string $heading = 'Casos Urgentes y Sensibles';
-    protected static ?string $pollingInterval = '60s';
+    protected static ?string $pollingInterval = '120s';
 
     public function table(Table $table): Table
     {
@@ -36,7 +37,7 @@ class CasosUrgentesWidget extends BaseWidget
             )
             ->columns([
                 Tables\Columns\TextColumn::make('codigo_caso')
-                    ->label('Código')
+                    ->label('Codigo')
                     ->weight('bold')
                     ->copyable(),
 
@@ -52,7 +53,7 @@ class CasosUrgentesWidget extends BaseWidget
                     ]),
 
                 Tables\Columns\IconColumn::make('es_sensible')
-                    ->label('🔒')
+                    ->label('Sens.')
                     ->boolean()
                     ->trueIcon('heroicon-s-shield-exclamation')
                     ->trueColor('danger'),
@@ -91,3 +92,5 @@ class CasosUrgentesWidget extends BaseWidget
             ->striped();
     }
 }
+
+

@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 class CasoSensibleResource extends Resource
 {
@@ -25,12 +26,21 @@ class CasoSensibleResource extends Resource
     protected static ?string $pluralModelLabel = 'Casos Sensibles';
     protected static ?int $navigationSort = 1;
 
+    protected static function getNavigationBadgeCount(): int
+    {
+        $user = auth()->user();
+
+        return Cache::remember("nav_badge:casos_sensibles:{$user->id}:{$user->rol}", 120, function () use ($user) {
+            return (int) Caso::sensibles()
+                ->activos()
+                ->when($user->esAsistente(), fn ($query) => $query->where('nivel_sensibilidad', '!=', 'altamente_confidencial'))
+                ->count();
+        });
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return (string) Caso::sensibles()
-            ->activos()
-            ->when(auth()->user()->esAsistente(), fn ($q) => $q->where('nivel_sensibilidad', '!=', 'altamente_confidencial'))
-            ->count();
+        return (string) static::getNavigationBadgeCount();
     }
 
     public static function getNavigationBadgeColor(): string|array|null

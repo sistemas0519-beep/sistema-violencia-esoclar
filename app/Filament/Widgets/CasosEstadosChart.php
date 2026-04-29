@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\Cache;
 
 class CasosEstadosChart extends ChartWidget
 {
-    protected static ?string $heading = 'Distribución de Casos por Estado';
+    protected static ?string $heading = 'Distribucion de Casos por Estado';
     protected static string $color = 'info';
     protected static ?int $sort = 0;
+    protected static bool $isLazy = true;
 
     protected function getStats(): array | null
     {
@@ -53,3 +54,4 @@ class CasosEstadosChart extends ChartWidget
         return 'doughnut';
     }
 }
+

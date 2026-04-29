@@ -26,49 +26,103 @@ class Monitoreo extends Page
     public function getMetricasProperty(): array
     {
         return Cache::remember('monitoreo:metricas', 60, function () {
-            $hoy   = now()->startOfDay();
-            $semana = now()->subDays(7);
+            $hoy        = now()->toDateString();
+            $semana     = now()->subDays(7)->toDateTimeString();
+            $inicioSemana = now()->startOfWeek()->toDateString();
+            $finSemana    = now()->endOfWeek()->toDateString();
 
-            $casosTotales   = Caso::count();
-            $casosResueltos = Caso::whereIn('estado', ['resuelto', 'cerrado'])->count();
+            $usuariosRow = DB::selectOne(
+                "SELECT
+                    COUNT(*) AS total,
+                    SUM(activo = 1) AS activos,
+                    SUM(activo = 0) AS inactivos,
+                    SUM(DATE(ultimo_acceso) = ?) AS hoy,
+                    SUM(ultimo_acceso >= ?) AS activos_semana,
+                    SUM(ultimo_acceso >= ? AND ultimo_acceso < ?) AS activos_semana_anterior,
+                    SUM(rol = 'psicologo' AND disponibilidad = 'disponible' AND activo = 1) AS psicologos_disponibles,
+                    SUM(rol = 'psicologo' AND disponibilidad = 'ocupado' AND activo = 1) AS psicologos_ocupados,
+                    SUM(rol = 'psicologo' AND activo = 1) AS psicologos_total
+                 FROM users",
+                [$hoy, $semana, now()->subDays(14)->toDateTimeString(), $semana]
+            );
+
+            $casosRow = DB::selectOne(
+                "SELECT
+                    COUNT(*) AS total,
+                    SUM(DATE(created_at) = ?) AS hoy,
+                    SUM(created_at >= ?) AS semana,
+                    SUM(estado = 'pendiente') AS pendientes,
+                    SUM(estado = 'en_proceso') AS en_proceso,
+                    SUM(estado IN ('resuelto', 'cerrado')) AS resueltos,
+                    SUM(prioridad = 'urgente' AND estado != 'cerrado') AS urgentes,
+                    SUM(sla_vencido = 1 AND estado != 'cerrado') AS sla_vencido,
+                    SUM(escalado = 1 AND estado != 'cerrado') AS escalados,
+                    SUM(es_sensible = 1 AND estado != 'cerrado') AS sensibles,
+                    SUM(estado = 'pendiente' AND asignado_a IS NULL) AS sin_asignar,
+                    SUM(sla_limite IS NOT NULL) AS sla_total,
+                    SUM(sla_limite IS NOT NULL AND sla_vencido = 0) AS sla_cumplido,
+                    SUM(created_at >= ?) AS casos_semana_actual,
+                    SUM(created_at >= ? AND created_at < ?) AS casos_semana_anterior
+                 FROM casos",
+                [$hoy, $semana, $semana, now()->subDays(14)->toDateTimeString(), $semana]
+            );
+
+            $asignacionesRow = DB::selectOne(
+                "SELECT
+                    SUM(estado = 'activa') AS activas,
+                    SUM(estado = 'completada') AS completadas
+                 FROM asignaciones"
+            );
+
+            $sesionesRow = DB::selectOne(
+                "SELECT
+                    SUM(DATE(fecha) = ?) AS hoy,
+                    SUM(DATE(fecha) = ? AND estado = 'completada') AS completadas_hoy,
+                    SUM(fecha BETWEEN ? AND ?) AS semana
+                 FROM sesiones",
+                [$hoy, $hoy, $inicioSemana, $finSemana]
+            );
+
+            $casosTotales   = (int) ($casosRow->total ?? 0);
+            $casosResueltos = (int) ($casosRow->resueltos ?? 0);
             $tasaResolucion = $casosTotales > 0 ? round(($casosResueltos / $casosTotales) * 100, 1) : 0;
 
-            $slaTotal    = Caso::whereNotNull('sla_limite')->count();
-            $slaCumplido = Caso::whereNotNull('sla_limite')->where('sla_vencido', false)->count();
-            $slaPct      = $slaTotal > 0 ? round(($slaCumplido / $slaTotal) * 100, 1) : 100;
+            $slaTotal = (int) ($casosRow->sla_total ?? 0);
+            $slaCumplido = (int) ($casosRow->sla_cumplido ?? 0);
+            $slaPct = $slaTotal > 0 ? round(($slaCumplido / $slaTotal) * 100, 1) : 100;
 
             return [
-                'usuarios_totales'        => User::count(),
-                'usuarios_activos'        => User::where('activo', true)->count(),
-                'usuarios_inactivos'      => User::where('activo', false)->count(),
-                'usuarios_hoy'            => User::whereDate('ultimo_acceso', $hoy)->count(),
+                'usuarios_totales'        => (int) ($usuariosRow->total ?? 0),
+                'usuarios_activos'        => (int) ($usuariosRow->activos ?? 0),
+                'usuarios_inactivos'      => (int) ($usuariosRow->inactivos ?? 0),
+                'usuarios_hoy'            => (int) ($usuariosRow->hoy ?? 0),
 
                 'casos_totales'           => $casosTotales,
-                'casos_hoy'               => Caso::whereDate('created_at', $hoy)->count(),
-                'casos_semana'            => Caso::where('created_at', '>=', $semana)->count(),
-                'casos_pendientes'        => Caso::where('estado', 'pendiente')->count(),
-                'casos_en_proceso'        => Caso::where('estado', 'en_proceso')->count(),
+                'casos_hoy'               => (int) ($casosRow->hoy ?? 0),
+                'casos_semana'            => (int) ($casosRow->semana ?? 0),
+                'casos_pendientes'        => (int) ($casosRow->pendientes ?? 0),
+                'casos_en_proceso'        => (int) ($casosRow->en_proceso ?? 0),
                 'casos_resueltos'         => $casosResueltos,
-                'casos_urgentes'          => Caso::where('prioridad', 'urgente')->where('estado', '!=', 'cerrado')->count(),
-                'casos_sla_vencido'       => Caso::where('sla_vencido', true)->where('estado', '!=', 'cerrado')->count(),
-                'casos_escalados'         => Caso::where('escalado', true)->where('estado', '!=', 'cerrado')->count(),
-                'casos_sensibles'         => Caso::where('es_sensible', true)->where('estado', '!=', 'cerrado')->count(),
-                'casos_sin_asignar'       => Caso::where('estado', 'pendiente')->whereNull('asignado_a')->count(),
+                'casos_urgentes'          => (int) ($casosRow->urgentes ?? 0),
+                'casos_sla_vencido'       => (int) ($casosRow->sla_vencido ?? 0),
+                'casos_escalados'         => (int) ($casosRow->escalados ?? 0),
+                'casos_sensibles'         => (int) ($casosRow->sensibles ?? 0),
+                'casos_sin_asignar'       => (int) ($casosRow->sin_asignar ?? 0),
                 'tasa_resolucion'         => $tasaResolucion,
 
                 'sla_total'               => $slaTotal,
                 'sla_cumplido_pct'        => $slaPct,
 
-                'asignaciones_activas'    => Asignacion::where('estado', 'activa')->count(),
-                'asignaciones_completadas'=> Asignacion::where('estado', 'completada')->count(),
+                'asignaciones_activas'    => (int) ($asignacionesRow->activas ?? 0),
+                'asignaciones_completadas'=> (int) ($asignacionesRow->completadas ?? 0),
 
-                'psicologos_disponibles'  => User::where('rol', 'psicologo')->where('disponibilidad', 'disponible')->where('activo', true)->count(),
-                'psicologos_ocupados'     => User::where('rol', 'psicologo')->where('disponibilidad', 'ocupado')->where('activo', true)->count(),
-                'psicologos_total'        => User::where('rol', 'psicologo')->where('activo', true)->count(),
+                'psicologos_disponibles'  => (int) ($usuariosRow->psicologos_disponibles ?? 0),
+                'psicologos_ocupados'     => (int) ($usuariosRow->psicologos_ocupados ?? 0),
+                'psicologos_total'        => (int) ($usuariosRow->psicologos_total ?? 0),
 
-                'sesiones_hoy'            => Sesion::whereDate('fecha', today())->count(),
-                'sesiones_completadas_hoy'=> Sesion::whereDate('fecha', today())->where('estado', 'completada')->count(),
-                'sesiones_semana'         => Sesion::whereBetween('fecha', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+                'sesiones_hoy'            => (int) ($sesionesRow->hoy ?? 0),
+                'sesiones_completadas_hoy'=> (int) ($sesionesRow->completadas_hoy ?? 0),
+                'sesiones_semana'         => (int) ($sesionesRow->semana ?? 0),
             ];
         });
     }
@@ -81,11 +135,21 @@ class Monitoreo extends Page
             $semanaActual  = now()->subDays(7);
             $semanaAnterior = now()->subDays(14);
 
-            $casosActual   = Caso::where('created_at', '>=', $semanaActual)->count();
-            $casosAnterior = Caso::whereBetween('created_at', [$semanaAnterior, $semanaActual])->count();
+            $casosRow = DB::selectOne(
+                'SELECT SUM(created_at >= ?) AS actual, SUM(created_at >= ? AND created_at < ?) AS anterior FROM casos',
+                [$semanaActual, $semanaAnterior, $semanaActual]
+            );
 
-            $usersActual   = User::where('ultimo_acceso', '>=', $semanaActual)->count();
-            $usersAnterior = User::whereBetween('ultimo_acceso', [$semanaAnterior, $semanaActual])->count();
+            $usersRow = DB::selectOne(
+                'SELECT SUM(ultimo_acceso >= ?) AS actual, SUM(ultimo_acceso >= ? AND ultimo_acceso < ?) AS anterior FROM users',
+                [$semanaActual, $semanaAnterior, $semanaActual]
+            );
+
+            $casosActual   = (int) ($casosRow->actual ?? 0);
+            $casosAnterior = (int) ($casosRow->anterior ?? 0);
+
+            $usersActual   = (int) ($usersRow->actual ?? 0);
+            $usersAnterior = (int) ($usersRow->anterior ?? 0);
 
             $calcTrend = fn ($actual, $anterior) => $anterior > 0
                 ? round((($actual - $anterior) / $anterior) * 100, 1)
@@ -98,26 +162,28 @@ class Monitoreo extends Page
         });
     }
 
-    // ─── Actividad reciente ───────────────────────────────────────────────────
+    // ─── Actividad reciente (caché 60s) ──────────────────────────────────────
 
     public function getActividadRecienteProperty(): array
     {
-        return AuditLog::with('user')
-            ->orderByDesc('created_at')
-            ->limit(20)
-            ->get()
-            ->map(fn ($log) => [
-                'id'          => $log->id,
-                'usuario'     => $log->user?->name ?? 'Sistema',
-                'rol'         => $log->user?->rol ?? '',
-                'accion'      => $log->accion,
-                'modulo'      => $log->modulo,
-                'descripcion' => $log->descripcion,
-                'ip'          => $log->ip_address,
-                'fecha'       => $log->created_at->diffForHumans(),
-                'fecha_full'  => $log->created_at->format('d/m/Y H:i:s'),
-            ])
-            ->toArray();
+        return Cache::remember('monitoreo:actividad_reciente', 60, function () {
+            return AuditLog::with(['user:id,name,rol'])
+                ->orderByDesc('created_at')
+                ->limit(15)
+                ->get(['id', 'user_id', 'accion', 'modulo', 'descripcion', 'ip_address', 'created_at'])
+                ->map(fn ($log) => [
+                    'id'          => $log->id,
+                    'usuario'     => $log->user?->name ?? 'Sistema',
+                    'rol'         => $log->user?->rol ?? '',
+                    'accion'      => $log->accion,
+                    'modulo'      => $log->modulo,
+                    'descripcion' => $log->descripcion,
+                    'ip'          => $log->ip_address,
+                    'fecha'       => $log->created_at->diffForHumans(),
+                    'fecha_full'  => $log->created_at->format('d/m/Y H:i:s'),
+                ])
+                ->toArray();
+        });
     }
 
     // ─── Alertas ─────────────────────────────────────────────────────────────

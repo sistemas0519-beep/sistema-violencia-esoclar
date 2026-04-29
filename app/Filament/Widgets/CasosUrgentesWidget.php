@@ -11,7 +11,8 @@ class CasosUrgentesWidget extends BaseWidget
 {
     protected static ?string $heading = 'Casos Urgentes y con SLA Vencido';
     protected static ?int $sort = 2;
-    protected static ?string $pollingInterval = '60s';
+    protected static bool $isLazy = true;
+    protected static ?string $pollingInterval = '120s';
     protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
@@ -98,3 +99,4 @@ class CasosUrgentesWidget extends BaseWidget
             ->emptyStateIcon('heroicon-o-check-circle');
     }
 }
+

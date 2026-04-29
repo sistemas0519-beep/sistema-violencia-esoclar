@@ -7,13 +7,14 @@ use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Gráfico de barras: Casos por tipo de violencia (últimos 30 días vs anterior).
+ * Grafico de barras: Casos por tipo de violencia (ultimos 30 dias vs anterior).
  */
 class CasosPorTipoChart extends ChartWidget
 {
     protected static ?string $heading = 'Casos por Tipo de Violencia';
     protected static string $color    = 'danger';
     protected static ?int $sort       = 2;
+    protected static bool $isLazy = true;
     protected static ?string $pollingInterval = '120s';
 
     public ?string $filter = 'all';
@@ -21,22 +22,22 @@ class CasosPorTipoChart extends ChartWidget
     protected function getFilters(): ?array
     {
         return [
-            'all'     => 'Todo el período',
+            'all'     => 'Todo el periodo',
             'month'   => 'Este mes',
             'week'    => 'Esta semana',
-            'year'    => 'Este año',
+            'year'    => 'Este ano',
         ];
     }
 
     protected function getData(): array
     {
         $tipos = [
-            'fisica'         => 'Física',
+            'fisica'         => 'Fisica',
             'verbal'         => 'Verbal',
-            'psicologica'    => 'Psicológica',
+            'psicologica'    => 'Psicologica',
             'bullying'       => 'Bullying',
             'cyberbullying'  => 'Cyberbullying',
-            'discriminacion' => 'Discriminación',
+            'discriminacion' => 'Discriminacion',
             'sexual'         => 'Sexual',
             'ciberacoso'     => 'Ciberacoso',
             'otro'           => 'Otro',
@@ -115,3 +116,4 @@ class CasosPorTipoChart extends ChartWidget
         ];
     }
 }
+

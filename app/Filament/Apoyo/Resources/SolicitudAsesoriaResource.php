@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 class SolicitudAsesoriaResource extends Resource
 {
@@ -24,14 +25,19 @@ class SolicitudAsesoriaResource extends Resource
     protected static ?string $pluralModelLabel = 'Solicitudes de Asesoría';
     protected static ?int $navigationSort = 1;
 
+    protected static function getNavigationBadgeCount(): int
+    {
+        return Cache::remember('nav_badge:solicitudes_pendientes', 60, fn (): int => (int) SolicitudAsesoria::pendientes()->count());
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return (string) SolicitudAsesoria::pendientes()->count();
+        return (string) static::getNavigationBadgeCount();
     }
 
     public static function getNavigationBadgeColor(): string|array|null
     {
-        $count = SolicitudAsesoria::pendientes()->count();
+        $count = static::getNavigationBadgeCount();
         return $count > 5 ? 'danger' : ($count > 0 ? 'warning' : 'success');
     }
 

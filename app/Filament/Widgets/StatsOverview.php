@@ -7,6 +7,7 @@ use App\Services\ReportesService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class StatsOverview extends BaseWidget
 {
@@ -15,23 +16,32 @@ class StatsOverview extends BaseWidget
 
     protected function getStats(): array
     {
-        // Obtener todas las estadísticas del servicio (caché)
         $stats = ReportesService::getEstadisticasGenerales();
         $casos = $stats['casos'];
         $asignaciones = $stats['asignaciones'];
         $usuarios = $stats['usuarios'];
 
-        // Gráfico de últimos 7 días (caché separado)
         $chartData = Cache::remember('stats:chart_7dias', 300, function () {
-            return array_values(
-                collect(range(6, 0))
-                    ->map(function ($days) {
-                        $date = today()->subDays($days);
-                        return \App\Models\Caso::whereDate('created_at', $date)->count();
-                    })
-                    ->toArray()
-            );
+            $desde = now()->subDays(6)->startOfDay();
+
+            $totalesPorDia = DB::table('casos')
+                ->selectRaw('DATE(created_at) as fecha, COUNT(*) as total')
+                ->where('created_at', '>=', $desde)
+                ->groupByRaw('DATE(created_at)')
+                ->pluck('total', 'fecha')
+                ->toArray();
+
+            return collect(range(6, 0))
+                ->map(function (int $days) use ($totalesPorDia) {
+                    $fecha = now()->subDays($days)->toDateString();
+
+                    return (int) ($totalesPorDia[$fecha] ?? 0);
+                })
+                ->values()
+                ->all();
         });
+
+        $documentosTotal = Cache::remember('stats:documentos_total', 300, fn (): int => Documento::count());
 
         return [
             Stat::make('Total de Casos', $casos['total'])
@@ -64,7 +74,7 @@ class StatsOverview extends BaseWidget
                 ->color('info')
                 ->url('/admin/asignaciones'),
 
-            Stat::make('Documentos', Documento::count())
+            Stat::make('Documentos', $documentosTotal)
                 ->description('Archivos en el sistema')
                 ->descriptionIcon('heroicon-m-document-text')
                 ->color('gray'),

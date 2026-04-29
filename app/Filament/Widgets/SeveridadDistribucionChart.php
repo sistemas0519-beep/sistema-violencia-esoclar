@@ -6,13 +6,14 @@ use App\Models\Caso;
 use Filament\Widgets\ChartWidget;
 
 /**
- * Gráfico donut: Distribución por nivel de severidad.
+ * Grafico donut: Distribucion por nivel de severidad.
  */
 class SeveridadDistribucionChart extends ChartWidget
 {
-    protected static ?string $heading = 'Distribución por Severidad';
+    protected static ?string $heading = 'Distribucion por Severidad';
     protected static string $color    = 'warning';
     protected static ?int $sort       = 4;
+    protected static bool $isLazy = true;
     protected static ?string $pollingInterval = '120s';
 
     protected function getData(): array
@@ -37,11 +38,11 @@ class SeveridadDistribucionChart extends ChartWidget
         ];
 
         $labelMap = [
-            1 => 'Niv. 1 – Muy leve',
-            2 => 'Niv. 2 – Leve',
-            3 => 'Niv. 3 – Moderado',
-            4 => 'Niv. 4 – Grave',
-            5 => 'Niv. 5 – Muy grave',
+            1 => 'Niv. 1 - Muy leve',
+            2 => 'Niv. 2 - Leve',
+            3 => 'Niv. 3 - Moderado',
+            4 => 'Niv. 4 - Grave',
+            5 => 'Niv. 5 - Muy grave',
         ];
 
         for ($i = 1; $i <= 5; $i++) {
@@ -85,3 +86,4 @@ class SeveridadDistribucionChart extends ChartWidget
         ];
     }
 }
+
