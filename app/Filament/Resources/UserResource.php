@@ -102,6 +102,32 @@ class UserResource extends Resource
                 ])
                 ->collapsible()
                 ->collapsed(),
+
+            Forms\Components\Section::make('Permisos del Sistema')
+                ->icon('heroicon-o-shield-check')
+                ->description('Configura los permisos y capacidades de este usuario en el sistema')
+                ->schema([
+                    Forms\Components\CheckboxList::make('permisos_sistema')
+                        ->label('Permisos asignados')
+                        ->options([
+                            'ver_casos'         => 'Ver casos de violencia',
+                            'crear_casos'       => 'Crear nuevos casos',
+                            'editar_casos'      => 'Editar casos existentes',
+                            'eliminar_casos'    => 'Eliminar casos',
+                            'exportar_datos'    => 'Exportar datos (Excel/PDF/CSV)',
+                            'ver_reportes'      => 'Acceder a reportes y estadísticas',
+                            'gestionar_usuarios' => 'Gestionar usuarios del sistema',
+                            'ver_auditoria'     => 'Ver registro de auditoría',
+                            'gestionar_configuracion' => 'Gestionar configuración del sistema',
+                            'ver_casos_sensibles' => 'Ver casos marcados como sensibles',
+                        ])
+                        ->columns(2)
+                        ->columnSpanFull()
+                        ->helperText('Los permisos aquí mostrados son informativos y complementan el rol asignado.'),
+                ])
+                ->collapsible()
+                ->collapsed()
+                ->visible(fn (Forms\Get $get) => in_array($get('rol'), ['docente', 'psicologo'])),
         ]);
     }
 

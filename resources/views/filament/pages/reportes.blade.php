@@ -290,7 +290,7 @@ wire:key="reportes-panel"
                 <p class="text-xs text-gray-400">Ajusta los parámetros para refinar los datos</p>
             </div>
         </div>
-        @if($fecha_inicio || $fecha_fin || $tipo_violencia || $estado)
+        @if($fecha_inicio || $fecha_fin || $tipo_violencia || $estado || $prioridad || $nivel_severidad || $grado_grupo)
             <button wire:click="limpiarFiltros"
                     class="text-xs text-red-500 hover:text-red-700 font-semibold flex items-center gap-1.5 transition-all px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-200">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,10 +300,80 @@ wire:key="reportes-panel"
             </button>
         @endif
     </div>
+
+    {{-- Filtros activos badges --}}
+    @php
+        $filtrosActivos = array_filter([
+            $tipo_violencia ? 'Tipo: ' . ucfirst($tipo_violencia) : null,
+            $estado ? 'Estado: ' . ucfirst(str_replace('_', ' ', $estado)) : null,
+            $prioridad ? 'Prioridad: ' . ucfirst($prioridad) : null,
+            $nivel_severidad ? 'Severidad: Niv. ' . $nivel_severidad : null,
+            $grado_grupo ? 'Grado: ' . $grado_grupo : null,
+            ($fecha_inicio || $fecha_fin) ? 'Período: ' . ($fecha_inicio ?? '...') . ' → ' . ($fecha_fin ?? '...') : null,
+        ]);
+    @endphp
+    @if(count($filtrosActivos) > 0)
+    <div class="flex flex-wrap gap-2 mb-4">
+        @foreach($filtrosActivos as $badge)
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-medium rounded-full">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-.293.707L13 10.414V15a1 1 0 01-.553.894l-4 2A1 1 0 017 17v-6.586L3.293 6.707A1 1 0 013 6V4z" clip-rule="evenodd"/></svg>
+            {{ $badge }}
+        </span>
+        @endforeach
+    </div>
+    @endif
+
     <form wire:submit.prevent class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {{ $this->form }}
     </form>
 </div>
+
+{{-- ═══════════════════════════════════════════
+     COMPARATIVA DE PERÍODOS
+═══════════════════════════════════════════ --}}
+@php
+    $anterior = $this->resumenPeriodoAnterior;
+    $actual   = $this->resumen;
+    $diffTotal = $actual['total'] - $anterior['total'];
+    $diffTasa  = $actual['tasa_resolucion'] - $anterior['tasa_resolucion'];
+@endphp
+@if($anterior['total'] > 0 || $actual['total'] > 0)
+<div class="rounded-2xl border border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-5 mb-6 anim-fade">
+    <p class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-3">
+        Comparativa: Período Actual vs Anterior
+    </p>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="text-center">
+            <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ $actual['total'] }}</p>
+            <p class="text-xs text-gray-500">Total actual</p>
+        </div>
+        <div class="text-center">
+            <p class="text-2xl font-bold text-gray-500">{{ $anterior['total'] }}</p>
+            <p class="text-xs text-gray-400">Período anterior</p>
+        </div>
+        <div class="text-center">
+            @if($diffTotal > 0)
+                <p class="text-2xl font-bold text-red-600">+{{ $diffTotal }}</p>
+                <p class="text-xs text-red-500">Incremento</p>
+            @elseif($diffTotal < 0)
+                <p class="text-2xl font-bold text-green-600">{{ $diffTotal }}</p>
+                <p class="text-xs text-green-500">Reducción</p>
+            @else
+                <p class="text-2xl font-bold text-gray-500">0</p>
+                <p class="text-xs text-gray-400">Sin cambio</p>
+            @endif
+        </div>
+        <div class="text-center">
+            @if($diffTasa >= 0)
+                <p class="text-2xl font-bold text-green-600">+{{ number_format($diffTasa, 1) }}%</p>
+            @else
+                <p class="text-2xl font-bold text-red-600">{{ number_format($diffTasa, 1) }}%</p>
+            @endif
+            <p class="text-xs text-gray-500">Δ Tasa resolución</p>
+        </div>
+    </div>
+</div>
+@endif
 
 {{-- ═══════════════════════════════════════════
      KPI CARDS

@@ -35,6 +35,19 @@ class Caso extends Model
         'area_tematica',
         'nivel_urgencia',
         'motivo_sensibilidad',
+        // Nuevos campos extendidos
+        'agresor_nombre',
+        'agresor_rol',
+        'agresor_grado_grupo',
+        'victima_nombre',
+        'victima_rol',
+        'victima_grado_grupo',
+        'testigos',
+        'grado_grupo',
+        'ubicacion_exacta',
+        'nivel_severidad',
+        'acciones_tomadas',
+        'docente_responsable_id',
     ];
 
     protected $casts = [
@@ -47,6 +60,7 @@ class Caso extends Model
         'fecha_primera_atencion'  => 'datetime',
         'fecha_escalamiento'      => 'datetime',
         'etiquetas'               => 'array',
+        'nivel_severidad'         => 'integer',
     ];
 
     /**
@@ -115,6 +129,13 @@ class Caso extends Model
     }
 
     // ─── Relaciones adicionales ───────────────────────────────────────────────
+
+    /** Docente responsable del caso */
+    public function docenteResponsable()
+    {
+        return $this->belongsTo(User::class, 'docente_responsable_id')
+                    ->select(['id', 'name', 'rol']);
+    }
 
     /** Documentos asociados a este caso */
     public function documentos()

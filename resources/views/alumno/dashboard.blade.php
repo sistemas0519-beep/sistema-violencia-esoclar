@@ -238,71 +238,6 @@
                 @endif
 
                 {{-- ════════════════════════════════════════════════
-                     CONSULTA DE EXPEDIENTE
-                     ════════════════════════════════════════════════ --}}
-                <section class="animate-fade-in-up stagger-3">
-                    <div class="bg-white shadow-sm rounded-2xl sm:rounded-3xl border border-gray-100/80 overflow-hidden">
-                        <div class="px-5 sm:px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
-                                <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="text-sm sm:text-base font-bold text-gray-800">Consultar expediente</h3>
-                                <p class="text-[10px] sm:text-xs text-gray-400">Busca por número de expediente o por tu nombre</p>
-                            </div>
-                        </div>
-
-                        <div class="px-5 sm:px-6 py-4 sm:py-5">
-                            <form method="POST" action="{{ route('consultar.expediente') }}" id="dashSearchForm" class="space-y-3">
-                                @csrf
-                                <input type="hidden" name="tipo" id="dashTipoInput" value="codigo">
-
-                                {{-- Tabs tipo --}}
-                                <div class="flex gap-1.5 bg-gray-50 border border-gray-200 rounded-xl p-1">
-                                    <button type="button"
-                                            id="dashTabCodigo"
-                                            onclick="dashSetTipo('codigo')"
-                                            class="flex-1 text-xs sm:text-sm font-semibold py-1.5 px-3 rounded-lg bg-indigo-600 text-white shadow-sm transition-all">
-                                        🔢 Código de expediente
-                                    </button>
-                                    <button type="button"
-                                            id="dashTabNombre"
-                                            onclick="dashSetTipo('nombre')"
-                                            class="flex-1 text-xs sm:text-sm font-medium py-1.5 px-3 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-white transition-all">
-                                        👤 Por nombre
-                                    </button>
-                                </div>
-
-                                {{-- Input + botón --}}
-                                <div class="flex gap-2">
-                                    <input
-                                        type="text"
-                                        id="dashBusquedaInput"
-                                        name="busqueda"
-                                        placeholder="Ej. VIO-2026-ABCDE1"
-                                        class="flex-1 text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none transition placeholder-gray-400"
-                                        required
-                                        autocomplete="off"
-                                    >
-                                    <button type="submit"
-                                            class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition shadow-sm">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                        </svg>
-                                        Consultar
-                                    </button>
-                                </div>
-                                <p class="text-[11px] text-gray-400" id="dashHintText">
-                                    Ingresa el código que recibiste al crear tu reporte (formato VIO-AÑO-CÓDIGO).
-                                </p>
-                            </form>
-                        </div>
-                    </div>
-                </section>
-
-                {{-- ════════════════════════════════════════════════
                      QUICK ACTIONS — Acciones principales
                      ════════════════════════════════════════════════ --}}
                 <section class="animate-fade-in-up stagger-3">
@@ -584,31 +519,5 @@
     </div>
 
     <script>
-        function dashSetTipo(valor) {
-            document.getElementById('dashTipoInput').value = valor;
-
-            const tabCodigo = document.getElementById('dashTabCodigo');
-            const tabNombre = document.getElementById('dashTabNombre');
-            const input     = document.getElementById('dashBusquedaInput');
-            const hint      = document.getElementById('dashHintText');
-
-            if (valor === 'nombre') {
-                tabNombre.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
-                tabNombre.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:bg-white');
-                tabCodigo.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
-                tabCodigo.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:bg-white');
-                input.placeholder = 'Ej. Juan Pérez García';
-                hint.textContent  = 'Solo se muestran casos identificados (no anónimos). Máximo 10 resultados.';
-            } else {
-                tabCodigo.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
-                tabCodigo.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:bg-white');
-                tabNombre.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
-                tabNombre.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:bg-white');
-                input.placeholder = 'Ej. VIO-2026-ABCDE1';
-                hint.textContent  = 'Ingresa el código que recibiste al crear tu reporte (formato VIO-AÑO-CÓDIGO).';
-            }
-            input.value = '';
-            input.focus();
-        }
     </script>
 </x-app-layout>

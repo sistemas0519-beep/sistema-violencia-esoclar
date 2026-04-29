@@ -8,6 +8,7 @@ use App\Services\ReportesService;
 use Filament\Pages\Page;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
@@ -18,30 +19,29 @@ class Reportes extends Page implements HasForms
     use InteractsWithForms;
 
     private const RESUMEN_DEFAULTS = [
-        'total' => 0,
-        'pendiente' => 0,
-        'en_proceso' => 0,
-        'resuelto' => 0,
-        'cerrado' => 0,
-        'anonimos' => 0,
-        'sin_asignar' => 0,
-        'urgentes' => 0,
-        'sla_vencido' => 0,
-        'tasa_resolucion' => 0,
+        'total' => 0, 'pendiente' => 0, 'en_proceso' => 0,
+        'resuelto' => 0, 'cerrado' => 0, 'anonimos' => 0,
+        'sin_asignar' => 0, 'urgentes' => 0, 'sla_vencido' => 0, 'tasa_resolucion' => 0,
     ];
 
     protected static ?string $navigationIcon  = 'heroicon-o-document-chart-bar';
-    protected static ?string $navigationGroup = 'Administraci�n';
+    protected static ?string $navigationGroup = 'Administracion';
     protected static ?string $navigationLabel = 'Reportes';
-    protected static ?string $title           = 'Reportes y Estad�sticas';
+    protected static ?string $title           = 'Reportes y Estadisticas';
     protected static ?int    $navigationSort  = 3;
 
     protected static string $view = 'filament.pages.reportes';
 
-    public ?string $fecha_inicio   = null;
-    public ?string $fecha_fin      = null;
-    public ?string $tipo_violencia = null;
-    public ?string $estado         = null;
+    // Filtros activos
+    public ?string $fecha_inicio    = null;
+    public ?string $fecha_fin       = null;
+    public ?string $tipo_violencia  = null;
+    public ?string $estado          = null;
+    public ?string $prioridad       = null;
+    public ?string $grado_grupo     = null;
+    public ?string $nivel_severidad = null;
+    public ?string $docente_id      = null;
+    public string  $periodo_comparar = 'mes_anterior';
 
     public function form(Form $form): Form
     {
@@ -60,19 +60,38 @@ class Reportes extends Page implements HasForms
                     ->maxDate(today()),
 
                 Select::make('tipo_violencia')
-                    ->label('Tipo de violencia')
+                    ->label('Tipo de Violencia')
                     ->options([
-                        'fisica' => 'F�sica', 'psicologica' => 'Psicol�gica', 'verbal' => 'Verbal',
-                        'sexual' => 'Sexual', 'ciberacoso' => 'Ciberacoso', 'discriminacion' => 'Discriminaci�n',
+                        'fisica' => 'Fisica', 'psicologica' => 'Psicologica', 'verbal' => 'Verbal',
+                        'bullying' => 'Bullying', 'cyberbullying' => 'Cyberbullying',
+                        'sexual' => 'Sexual', 'ciberacoso' => 'Ciberacoso',
+                        'discriminacion' => 'Discriminacion',
                     ])
                     ->placeholder('Todos')
                     ->nullable(),
 
                 Select::make('estado')
                     ->label('Estado')
-                    ->options(['pendiente' => 'Pendiente', 'en_proceso' => 'En Proceso', 
+                    ->options(['pendiente' => 'Pendiente', 'en_proceso' => 'En Proceso',
                                'resuelto' => 'Resuelto', 'cerrado' => 'Cerrado'])
                     ->placeholder('Todos')
+                    ->nullable(),
+
+                Select::make('prioridad')
+                    ->label('Prioridad')
+                    ->options(['baja' => 'Baja', 'media' => 'Media', 'alta' => 'Alta', 'urgente' => 'Urgente'])
+                    ->placeholder('Todas')
+                    ->nullable(),
+
+                Select::make('nivel_severidad')
+                    ->label('Severidad'  )
+                    ->options([1 => 'Niv. 1', 2 => 'Niv. 2', 3 => 'Niv. 3', 4 => 'Niv. 4', 5 => 'Niv. 5'])
+                    ->placeholder('Todas')
+                    ->nullable(),
+
+                TextInput::make('grado_grupo')
+                    ->label('Grado/Grupo')
+                    ->placeholder('Ej: 3 A')
                     ->nullable(),
             ])
             ->columns(4)
@@ -81,7 +100,8 @@ class Reportes extends Page implements HasForms
 
     public function limpiarFiltros(): void
     {
-        $this->fecha_inicio = $this->fecha_fin = $this->tipo_violencia = $this->estado = null;
+        $this->fecha_inicio = $this->fecha_fin = $this->tipo_violencia = null;
+        $this->estado = $this->prioridad = $this->nivel_severidad = $this->grado_grupo = null;
         $this->form->fill();
     }
 
@@ -92,6 +112,9 @@ class Reportes extends Page implements HasForms
         if ($this->fecha_fin) $q->whereDate('created_at', '<=', $this->fecha_fin);
         if ($this->tipo_violencia) $q->where('tipo_violencia', $this->tipo_violencia);
         if ($this->estado) $q->where('estado', $this->estado);
+        if ($this->prioridad) $q->where('prioridad', $this->prioridad);
+        if ($this->nivel_severidad) $q->where('nivel_severidad', $this->nivel_severidad);
+        if ($this->grado_grupo) $q->where('grado_grupo', 'like', '%' . $this->grado_grupo . '%');
         return $q;
     }
 
@@ -100,8 +123,26 @@ class Reportes extends Page implements HasForms
         $resumen = ReportesService::getResumenCasos(
             $this->fecha_inicio, $this->fecha_fin, $this->tipo_violencia, $this->estado
         );
-
         return array_replace(self::RESUMEN_DEFAULTS, is_array($resumen) ? $resumen : []);
+    }
+
+    public function getResumenPeriodoAnteriorProperty(): array
+    {
+        // Calcular el periodo anterior
+        $inicio = $this->fecha_inicio ? \Carbon\Carbon::parse($this->fecha_inicio) : now()->subMonth();
+        $fin    = $this->fecha_fin ? \Carbon\Carbon::parse($this->fecha_fin) : now();
+        $dias   = $inicio->diffInDays($fin);
+
+        $q = Caso::query()
+            ->whereDate('created_at', '>=', $inicio->copy()->subDays($dias + 1))
+            ->whereDate('created_at', '<=', $inicio->copy()->subDay());
+
+        $total   = $q->count();
+        $resuelto = (clone $q)->whereIn('estado', ['resuelto', 'cerrado'])->count();
+        return [
+            'total'           => $total,
+            'tasa_resolucion' => $total > 0 ? round($resuelto / $total * 100, 1) : 0,
+        ];
     }
 
     public function getPorTipoProperty(): array
@@ -114,15 +155,6 @@ class Reportes extends Page implements HasForms
         return ReportesService::getCasosPorMes($this->fecha_inicio, $this->fecha_fin);
     }
 
-    public function getUltimosCasosProperty()
-    {
-        return $this->baseQuery()
-            ->with(['denunciante:id,name', 'asignado:id,name'])
-            ->orderByDesc('created_at')
-            ->limit(20)
-            ->get();
-    }
-
     public function getPorRegionProperty(): array
     {
         return ReportesService::getCasosPorRegion(8);
@@ -133,18 +165,16 @@ class Reportes extends Page implements HasForms
         return collect(ReportesService::getCargaPorPsicologo())
             ->map(function ($row) {
                 $row = is_array($row) ? $row : [];
-
-                $activas = (int) ($row['activas'] ?? $row['asignaciones_activas'] ?? 0);
+                $activas    = (int) ($row['activas'] ?? $row['asignaciones_activas'] ?? 0);
                 $finalizadas = (int) ($row['finalizadas'] ?? 0);
-
                 return [
-                    'id' => $row['id'] ?? null,
-                    'nombre' => (string) ($row['nombre'] ?? 'Sin nombre'),
-                    'especialidad' => $row['especialidad'] ?? null,
-                    'disponibilidad' => $row['disponibilidad'] ?? null,
-                    'activas' => $activas,
+                    'id'          => $row['id'] ?? null,
+                    'nombre'      => (string) ($row['nombre'] ?? 'Sin nombre'),
+                    'especialidad'    => $row['especialidad'] ?? null,
+                    'disponibilidad'  => $row['disponibilidad'] ?? null,
+                    'activas'     => $activas,
                     'finalizadas' => $finalizadas,
-                    'total' => (int) ($row['total'] ?? ($activas + $finalizadas)),
+                    'total'       => (int) ($row['total'] ?? ($activas + $finalizadas)),
                     'asignaciones_activas' => (int) ($row['asignaciones_activas'] ?? $activas),
                     'casos_activos' => (int) ($row['casos_activos'] ?? 0),
                 ];
@@ -153,54 +183,102 @@ class Reportes extends Page implements HasForms
             ->all();
     }
 
+    public function getPorUbicacionProperty(): array
+    {
+        return Caso::selectRaw('ubicacion_exacta, COUNT(*) as total')
+            ->whereNotNull('ubicacion_exacta')
+            ->groupBy('ubicacion_exacta')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($r) => ['ubicacion' => $r->ubicacion_exacta, 'total' => $r->total])
+            ->toArray();
+    }
+
+    public function getPorSeveridadProperty(): array
+    {
+        return Caso::selectRaw('nivel_severidad, COUNT(*) as total')
+            ->whereNotNull('nivel_severidad')
+            ->groupBy('nivel_severidad')
+            ->orderBy('nivel_severidad')
+            ->get()
+            ->map(fn ($r) => ['nivel' => $r->nivel_severidad, 'total' => $r->total])
+            ->toArray();
+    }
+
     public function getAsignacionesResumenProperty(): array
     {
         return [
-            'total' => Asignacion::count(),
-            'activas' => Asignacion::where('estado', 'activa')->count(),
+            'total'      => Asignacion::count(),
+            'activas'    => Asignacion::where('estado', 'activa')->count(),
             'finalizadas' => Asignacion::where('estado', 'finalizada')->count(),
             'canceladas' => Asignacion::where('estado', 'cancelada')->count(),
         ];
     }
 
+    public function getUltimosCasosProperty()
+    {
+        return $this->baseQuery()
+            ->with(['denunciante:id,name', 'asignado:id,name'])
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get();
+    }
+
+    // ── Labels ─────────────────────────────────────────────────────────────────
+
     protected array $tipoLabel = [
-        'fisica' => 'F�sica', 'psicologica' => 'Psicol�gica', 'verbal' => 'Verbal',
-        'sexual' => 'Sexual', 'ciberacoso' => 'Ciberacoso', 'discriminacion' => 'Discriminaci�n',
+        'fisica' => 'Fisica', 'psicologica' => 'Psicologica', 'verbal' => 'Verbal',
+        'bullying' => 'Bullying', 'cyberbullying' => 'Cyberbullying',
+        'sexual' => 'Sexual', 'ciberacoso' => 'Ciberacoso', 'discriminacion' => 'Discriminacion',
     ];
 
     protected array $estadoLabel = [
-        'pendiente' => 'Pendiente', 'en_proceso' => 'En Proceso', 
+        'pendiente' => 'Pendiente', 'en_proceso' => 'En Proceso',
         'resuelto' => 'Resuelto', 'cerrado' => 'Cerrado',
     ];
 
     protected function casoRows()
     {
         return $this->baseQuery()
-            ->with(['denunciante:id,name', 'asignado:id,name'])
+            ->with(['denunciante:id,name', 'asignado:id,name', 'docenteResponsable:id,name'])
             ->orderByDesc('created_at')
             ->get();
     }
 
+    // ── Exportaciones ──────────────────────────────────────────────────────────
+
     public function exportarCsv(): StreamedResponse
     {
-        $casos = $this->casoRows();
+        $casos    = $this->casoRows();
         $filename = 'reporte-casos-' . now()->format('Y-m-d') . '.csv';
 
         return response()->streamDownload(function () use ($casos) {
             $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
-            fputcsv($handle, ['C�digo', 'Tipo', 'Estado', 'An�nimo', 'Denunciante', 'Asignado', 'Regi�n', 'Escuela', 'Incidente', 'Registro']);
+            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fputcsv($handle, [
+                'Codigo', 'Tipo', 'Estado', 'Prioridad', 'Severidad',
+                'Anonimo', 'Denunciante', 'Agresor', 'Victima',
+                'Grado/Grupo', 'Ubicacion', 'Docente Responsable',
+                'Asignado', 'Region', 'Escuela', 'Incidente', 'Registro',
+            ]);
             foreach ($casos as $c) {
                 fputcsv($handle, [
                     $c->codigo_caso,
                     $this->tipoLabel[$c->tipo_violencia] ?? $c->tipo_violencia,
                     $this->estadoLabel[$c->estado] ?? $c->estado,
-                    $c->es_anonimo ? 'S�' : 'No',
-                    $c->es_anonimo ? 'An�nimo' : ($c->denunciante?->name ?? '�'),
+                    ucfirst($c->prioridad ?? ''),
+                    $c->nivel_severidad ?? '',
+                    $c->es_anonimo ? 'Si' : 'No',
+                    $c->es_anonimo ? 'Anonimo' : ($c->denunciante?->name ?? '-'),
+                    $c->agresor_nombre ?? '-',
+                    $c->victima_nombre ?? '-',
+                    $c->grado_grupo ?? '-',
+                    $c->ubicacion_exacta ?? '-',
+                    $c->docenteResponsable?->name ?? '-',
                     $c->asignado?->name ?? 'Sin asignar',
-                    $c->region ?? '�',
-                    $c->escuela_nombre ?? '�',
-                    $c->fecha_incidente?->format('d/m/Y') ?? '�',
+                    $c->region ?? '-',
+                    $c->escuela_nombre ?? '-',
+                    $c->fecha_incidente?->format('d/m/Y') ?? '-',
                     $c->created_at->format('d/m/Y H:i'),
                 ]);
             }
@@ -210,15 +288,65 @@ class Reportes extends Page implements HasForms
 
     public function exportarExcel(): StreamedResponse
     {
-        $casos = $this->casoRows();
+        $casos    = $this->casoRows();
         $filename = 'reporte-casos-' . now()->format('Y-m-d') . '.xls';
+
         return response()->streamDownload(function () use ($casos) {
-            echo '<?xml version="1.0" encoding="UTF-8"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Casos"><Table>';
-            echo '<Row><Cell><Data ss:Type="String">C�digo</Data></Cell><Cell><Data ss:Type="String">Tipo</Data></Cell></Row>';
+            echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+            echo '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ';
+            echo 'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">';
+            echo '<Styles><Style ss:ID="header"><Font ss:Bold="1"/><Interior ss:Color="#F59E0B" ss:Pattern="Solid"/></Style></Styles>';
+            echo '<Worksheet ss:Name="Casos"><Table>';
+
+            $headers = ['Codigo', 'Tipo', 'Estado', 'Prioridad', 'Severidad',
+                        'Anonimo', 'Denunciante', 'Agresor', 'Victima',
+                        'Grado/Grupo', 'Ubicacion', 'Docente', 'Asignado',
+                        'Region', 'Escuela', 'Fecha Incidente', 'Registro'];
+            echo '<Row>';
+            foreach ($headers as $h) {
+                echo '<Cell ss:StyleID="header"><Data ss:Type="String">' . htmlspecialchars($h, ENT_XML1) . '</Data></Cell>';
+            }
+            echo '</Row>';
+
             foreach ($casos as $c) {
-                echo '<Row><Cell><Data ss:Type="String">' . htmlspecialchars($c->codigo_caso, ENT_XML1) . '</Data></Cell></Row>';
+                echo '<Row>';
+                $cols = [
+                    $c->codigo_caso,
+                    $this->tipoLabel[$c->tipo_violencia] ?? $c->tipo_violencia,
+                    $this->estadoLabel[$c->estado] ?? $c->estado,
+                    ucfirst($c->prioridad ?? ''),
+                    (string) ($c->nivel_severidad ?? ''),
+                    $c->es_anonimo ? 'Si' : 'No',
+                    $c->es_anonimo ? 'Anonimo' : ($c->denunciante?->name ?? '-'),
+                    $c->agresor_nombre ?? '-',
+                    $c->victima_nombre ?? '-',
+                    $c->grado_grupo ?? '-',
+                    $c->ubicacion_exacta ?? '-',
+                    $c->docenteResponsable?->name ?? '-',
+                    $c->asignado?->name ?? 'Sin asignar',
+                    $c->region ?? '-',
+                    $c->escuela_nombre ?? '-',
+                    $c->fecha_incidente?->format('d/m/Y') ?? '-',
+                    $c->created_at->format('d/m/Y H:i'),
+                ];
+                foreach ($cols as $val) {
+                    echo '<Cell><Data ss:Type="String">' . htmlspecialchars((string) $val, ENT_XML1) . '</Data></Cell>';
+                }
+                echo '</Row>';
             }
             echo '</Table></Worksheet></Workbook>';
         }, $filename, ['Content-Type' => 'application/vnd.ms-excel']);
+    }
+
+    public function exportarPdf(): StreamedResponse
+    {
+        $resumen  = $this->resumen;
+        $porTipo  = $this->porTipo;
+        $casos    = $this->casoRows();
+        $filename = 'reporte-casos-' . now()->format('Y-m-d') . '.html';
+
+        return response()->streamDownload(function () use ($resumen, $porTipo, $casos) {
+            echo view('filament.pages.reportes-pdf', compact('resumen', 'porTipo', 'casos'))->render();
+        }, $filename, ['Content-Type' => 'text/html; charset=UTF-8']);
     }
 }
