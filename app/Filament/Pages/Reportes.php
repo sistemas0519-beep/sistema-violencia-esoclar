@@ -94,7 +94,7 @@ class Reportes extends Page implements HasForms
 
                 TextInput::make('grado_grupo')
                     ->label('Grado/Grupo')
-                    ->placeholder('Ej: 3 A')
+                    ->placeholder('Ej: 3 A'),
 
                 Select::make('region_filtro')
                     ->label('Región')

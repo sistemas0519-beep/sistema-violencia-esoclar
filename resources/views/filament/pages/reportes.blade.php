@@ -693,12 +693,24 @@ wire:key="reportes-panel"
             requieren atención inmediata.
         </p>
     </div>
-    <a href="{{ route('filament.admin.resources.casos.index', ['tableFilters[estado][value]' => 'pendiente']) }}"
+    <a href="{{ url('/admin/casos') }}?tableFilters[estado][value]=pendiente"
        class="text-xs font-bold text-red-600 dark:text-red-300 px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all whitespace-nowrap">
         Ver casos →
     </a>
 </div>
 @endif
+
+{{-- ═══════════════════════════════════════════
+     TAB NAVIGATION
+═══════════════════════════════════════════ --}}
+<div class="flex flex-wrap gap-2 mb-6 p-1.5 bg-gray-100 dark:bg-gray-800/80 rounded-2xl overflow-x-auto no-print">
+    <button @click="activeTab = 'general'; $nextTick(() => initCharts())"
+            :class="activeTab === 'general' ? 'tab-active' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'"
+            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        General
+    </button>
+    <button @click="activeTab = 'table'"
             :class="activeTab === 'table' ? 'tab-active' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'"
             class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
