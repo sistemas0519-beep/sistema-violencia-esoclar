@@ -131,18 +131,26 @@ class Reportes extends Page implements HasForms
         ]);
     }
 
+    protected function applyFilters($query, ?string $fechaInicio = null, ?string $fechaFin = null)
+    {
+        $fechaInicio ??= $this->fecha_inicio;
+        $fechaFin ??= $this->fecha_fin;
+
+        if ($fechaInicio)      $query->whereDate('created_at', '>=', $fechaInicio);
+        if ($fechaFin)         $query->whereDate('created_at', '<=', $fechaFin);
+        if ($this->tipo_violencia)  $query->where('tipo_violencia', $this->tipo_violencia);
+        if ($this->estado)          $query->where('estado', $this->estado);
+        if ($this->prioridad)       $query->where('prioridad', $this->prioridad);
+        if ($this->nivel_severidad) $query->where('nivel_severidad', $this->nivel_severidad);
+        if ($this->grado_grupo)     $query->where('grado_grupo', 'like', '%' . $this->grado_grupo . '%');
+        if ($this->region_filtro)   $query->where('region', $this->region_filtro);
+
+        return $query;
+    }
+
     protected function baseQuery()
     {
-        $q = Caso::query();
-        if ($this->fecha_inicio)   $q->whereDate('created_at', '>=', $this->fecha_inicio);
-        if ($this->fecha_fin)      $q->whereDate('created_at', '<=', $this->fecha_fin);
-        if ($this->tipo_violencia) $q->where('tipo_violencia', $this->tipo_violencia);
-        if ($this->estado)          $q->where('estado', $this->estado);
-        if ($this->prioridad)         $q->where('prioridad', $this->prioridad);
-        if ($this->nivel_severidad)   $q->where('nivel_severidad', $this->nivel_severidad);
-        if ($this->grado_grupo)       $q->where('grado_grupo', 'like', '%' . $this->grado_grupo . '%');
-        if ($this->region_filtro)     $q->where('region', $this->region_filtro);
-        return $q;
+        return $this->applyFilters(Caso::query());
     }
 
     public function getResumenProperty(): array
@@ -155,17 +163,20 @@ class Reportes extends Page implements HasForms
 
     public function getResumenPeriodoAnteriorProperty(): array
     {
-        // Calcular el periodo anterior
         $inicio = $this->fecha_inicio ? \Carbon\Carbon::parse($this->fecha_inicio) : now()->subMonth();
         $fin    = $this->fecha_fin ? \Carbon\Carbon::parse($this->fecha_fin) : now();
         $dias   = $inicio->diffInDays($fin);
 
-        $q = Caso::query()
-            ->whereDate('created_at', '>=', $inicio->copy()->subDays($dias + 1))
-            ->whereDate('created_at', '<=', $inicio->copy()->subDay());
+        $fechaInicioAnterior = $inicio->copy()->subDays($dias + 1)->toDateString();
+        $fechaFinAnterior = $inicio->copy()->subDay()->toDateString();
 
-        $total   = $q->count();
-        $resuelto = (clone $q)->whereIn('estado', ['resuelto', 'cerrado'])->count();
+        $row = $this->applyFilters(Caso::query(), $fechaInicioAnterior, $fechaFinAnterior)
+            ->selectRaw("COUNT(*) as total, SUM(estado IN ('resuelto', 'cerrado')) as resuelto")
+            ->first();
+
+        $total = (int) ($row->total ?? 0);
+        $resuelto = (int) ($row->resuelto ?? 0);
+
         return [
             'total'           => $total,
             'tasa_resolucion' => $total > 0 ? round($resuelto / $total * 100, 1) : 0,
@@ -174,17 +185,54 @@ class Reportes extends Page implements HasForms
 
     public function getPorTipoProperty(): array
     {
-        return ReportesService::getCasosPorTipo($this->fecha_inicio, $this->fecha_fin);
+        $rows = $this->baseQuery()
+            ->select('tipo_violencia', DB::raw('count(*) as total'))
+            ->whereNotNull('tipo_violencia')
+            ->groupBy('tipo_violencia')
+            ->orderByDesc('total')
+            ->get();
+
+        $total = max((int) $rows->sum('total'), 1);
+
+        return $rows
+            ->map(fn ($row) => [
+                'tipo' => $row->tipo_violencia,
+                'total' => $row->total,
+                'porcentaje' => round(($row->total / $total) * 100, 1),
+            ])
+            ->toArray();
     }
 
     public function getPorMesProperty(): array
     {
-        return ReportesService::getCasosPorMes($this->fecha_inicio, $this->fecha_fin);
+        return $this->baseQuery()
+            ->selectRaw('YEAR(created_at) as anio, MONTH(created_at) as mes, COUNT(*) as total')
+            ->groupBy('anio', 'mes')
+            ->orderBy('anio')
+            ->orderBy('mes')
+            ->get()
+            ->map(fn ($row) => [
+                'mes' => now()->setDate((int) $row->anio, (int) $row->mes, 1)->translatedFormat('M Y'),
+                'total' => $row->total,
+            ])
+            ->toArray();
     }
 
     public function getPorRegionProperty(): array
     {
-        return ReportesService::getCasosPorRegion(8);
+        return $this->baseQuery()
+            ->select('region', DB::raw('count(*) as total'))
+            ->whereNotNull('region')
+            ->where('region', '!=', '')
+            ->groupBy('region')
+            ->orderByDesc('total')
+            ->limit(8)
+            ->get()
+            ->map(fn ($row) => [
+                'region' => $row->region,
+                'total' => $row->total,
+            ])
+            ->toArray();
     }
 
     public function get14DiasProperty(): array
@@ -214,7 +262,17 @@ class Reportes extends Page implements HasForms
 
     public function getTasasResolucionProperty(): array
     {
-        return ReportesService::getTasasResolucionPorMes();
+        return $this->baseQuery()
+            ->selectRaw("YEAR(created_at) as anio, MONTH(created_at) as mes, COUNT(*) as total, SUM(estado IN ('resuelto', 'cerrado')) as resueltos")
+            ->groupBy('anio', 'mes')
+            ->orderBy('anio')
+            ->orderBy('mes')
+            ->get()
+            ->map(fn ($row) => [
+                'mes' => now()->setDate((int) $row->anio, (int) $row->mes, 1)->translatedFormat('M Y'),
+                'tasa' => (int) $row->total > 0 ? round(((int) $row->resueltos / (int) $row->total) * 100, 1) : 0,
+            ])
+            ->toArray();
     }
 
     public function getAlertasCriticasProperty(): array

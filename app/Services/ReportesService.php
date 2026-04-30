@@ -307,15 +307,27 @@ class ReportesService
     public static function getCasosUltimos14Dias(): array
     {
         return Cache::remember('reportes:ultimos_14_dias', 300, function () {
-            $datos = [];
-            for ($i = 13; $i >= 0; $i--) {
-                $fecha = today()->subDays($i);
-                $datos[] = [
-                    'fecha' => $fecha->format('d/m'),
-                    'casos' => Caso::whereDate('created_at', $fecha)->count(),
-                ];
-            }
-            return $datos;
+            $desde = today()->subDays(13)->startOfDay();
+
+            $totalesPorDia = DB::table('casos')
+                ->selectRaw('DATE(created_at) as fecha, COUNT(*) as total')
+                ->where('created_at', '>=', $desde)
+                ->groupByRaw('DATE(created_at)')
+                ->pluck('total', 'fecha')
+                ->toArray();
+
+            return collect(range(13, 0))
+                ->map(function (int $days) use ($totalesPorDia) {
+                    $fecha = today()->subDays($days);
+                    $key = $fecha->toDateString();
+
+                    return [
+                        'fecha' => $fecha->format('d/m'),
+                        'casos' => (int) ($totalesPorDia[$key] ?? 0),
+                    ];
+                })
+                ->values()
+                ->all();
         });
     }
 

@@ -12,7 +12,7 @@
             <h3 class="text-sm font-semibold text-red-800 dark:text-red-200">
                 Alertas Críticas del Sistema
             </h3>
-            <span class="ml-auto text-xs text-red-500 dark:text-red-400">Actualización automática cada 30s</span>
+            <span class="ml-auto text-xs text-red-500 dark:text-red-400">Actualización automática cada 90s</span>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">

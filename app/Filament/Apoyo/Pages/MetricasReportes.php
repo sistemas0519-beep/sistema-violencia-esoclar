@@ -18,7 +18,7 @@ class MetricasReportes extends Page
     protected static ?string $title           = 'Métricas y Reportes';
     protected static ?int    $navigationSort  = 1;
 
-    protected static string $view = 'filament.apoyo.pages.Métricas-reportes';
+    protected static string $view = 'filament.apoyo.pages.metricas-reportes';
 
     public string $periodo = 'mes';
 
@@ -32,7 +32,7 @@ class MetricasReportes extends Page
         };
     }
 
-    public function getMétricas(): array
+    public function getMetricas(): array
     {
         $userId = auth()->id();
         $desde  = match ($this->periodo) {
@@ -41,7 +41,7 @@ class MetricasReportes extends Page
             default  => now()->startOfMonth(),
         };
 
-        $cacheKey = "Métricas:{$userId}:{$this->periodo}:" . $desde->toDateString();
+        $cacheKey = "metricas:{$userId}:{$this->periodo}:" . $desde->toDateString();
 
         return Cache::remember($cacheKey, 300, function () use ($userId, $desde) {
             // Casos: una sola consulta para el total
