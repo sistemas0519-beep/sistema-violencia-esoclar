@@ -38,7 +38,7 @@ Route::get('/', function (Request $request) {
             })->where('es_anonimo', false)->orderByDesc('created_at');
         }
 
-        $resultados = $query->paginate(5)->withQueryString();
+        $resultados = $query->paginate(1)->withQueryString();
     }
 
     return view('welcome', compact('resultados', 'busqueda', 'tipo', 'buscado'));
@@ -47,6 +47,11 @@ Route::get('/', function (Request $request) {
 // ─── Consulta pública de expedientes ──────────────────────────────────────────
 Route::get('/consultar-expediente', [ControladorDenuncias::class, 'consultarExpediente'])
     ->name('consultar.expediente');
+
+// ─── Logging de auto-refresh (público, rate-limited) ─────────────────────────
+Route::post('/log-auto-refresh', [ControladorDenuncias::class, 'logAutoRefresh'])
+    ->middleware('throttle:30,1')
+    ->name('log.auto-refresh');
 
 // ─── Dashboard dinámico (redirige según rol) ─────────────────────────────────
 Route::get('/dashboard', [DashboardController::class, 'index'])

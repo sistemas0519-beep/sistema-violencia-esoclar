@@ -4,6 +4,8 @@
     showCharts: false,
     init() {
         this.$nextTick(() => { this.showCharts = true; this.initCharts(); });
+        // Re-init charts when tab becomes visible
+        document.addEventListener('livewire:navigated', () => { this.initCharts(); });
     },
     initCharts() {
         this.$nextTick(() => {
@@ -315,6 +317,7 @@ wire:key="reportes-panel"
 
 {{-- Chart.js CDN --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
 <style>
     /* Animations */
@@ -348,9 +351,18 @@ wire:key="reportes-panel"
     }
 
     .tab-active {
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        color: white;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+        color: white !important;
         box-shadow: 0 4px 15px -3px rgba(99,102,241,.4);
+        border-color: transparent !important;
+    }
+    .tab-btn {
+        transition: all .2s ease;
+    }
+    .tab-btn:not(.tab-active):hover {
+        background: rgba(99,102,241,.08);
+        border-color: rgba(99,102,241,.3);
+        color: #6366f1;
     }
 
     /* Progress bars */
@@ -375,31 +387,51 @@ wire:key="reportes-panel"
     <div class="absolute -left-8 -bottom-8 w-32 h-32 rounded-full bg-white/5"></div>
     <div class="shimmer-bg absolute inset-0 pointer-events-none"></div>
 
-    <div class="relative px-8 py-7 flex flex-wrap items-center justify-between gap-4">
-        <div>
-            <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 rounded-xl bg-white/15 glass flex items-center justify-center">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="relative px-8 py-7">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-white/15 glass flex items-center justify-center shadow-inner shadow-white/10">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                     </svg>
                 </div>
                 <div>
-                    <h2 class="text-2xl font-black text-white tracking-tight">Dashboard de Reportes</h2>
-                    <p class="text-indigo-200 text-sm">Centro de análisis y estadísticas</p>
+                    <h2 class="text-3xl font-black text-white tracking-tight leading-tight">Dashboard de Reportes</h2>
+                    <p class="text-indigo-200 text-sm">Centro de análisis y estadísticas del sistema</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                <div class="flex items-center gap-2 bg-white/10 glass text-white text-sm px-4 py-2.5 rounded-xl border border-white/10">
+                    <svg class="w-4 h-4 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="font-medium">{{ now()->isoFormat('D [de] MMMM[,] Y') }}</span>
+                </div>
+                <div class="flex items-center gap-2 bg-emerald-500/20 glass text-emerald-100 text-sm px-4 py-2.5 rounded-xl border border-emerald-400/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="font-semibold">En vivo</span>
                 </div>
             </div>
         </div>
-        <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2 bg-white/10 glass text-white text-sm px-4 py-2 rounded-xl">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                {{ now()->isoFormat('D [de] MMMM [de] Y') }}
-            </div>
-            <div class="flex items-center gap-2 bg-emerald-500/20 glass text-emerald-100 text-sm px-4 py-2 rounded-xl">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                En vivo
-            </div>
+        {{-- Inline quick stats in header --}}
+        @php $headerR = array_replace(['total'=>0,'pendiente'=>0,'en_proceso'=>0,'resuelto'=>0,'urgentes'=>0,'tasa_resolucion'=>0], is_array($this->resumen)?$this->resumen:[]); @endphp
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-1">
+            @foreach([
+                ['label'=>'Total Casos','val'=>number_format($headerR['total']),'icon'=>'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2','color'=>'bg-white/10 border-white/15'],
+                ['label'=>'Pendientes','val'=>$headerR['pendiente'],'icon'=>'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z','color'=>'bg-amber-500/20 border-amber-400/20'],
+                ['label'=>'En Proceso','val'=>$headerR['en_proceso'],'icon'=>'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15','color'=>'bg-blue-500/20 border-blue-400/20'],
+                ['label'=>'Resueltos','val'=>$headerR['resuelto'],'icon'=>'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z','color'=>'bg-emerald-500/20 border-emerald-400/20'],
+            ] as $hs)
+                <div class="{{ $hs['color'] }} glass border rounded-xl px-4 py-3 flex items-center gap-3">
+                    <svg class="w-5 h-5 text-white/70 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $hs['icon'] }}"/>
+                    </svg>
+                    <div>
+                        <div class="text-xl font-black text-white leading-none">{{ $hs['val'] }}</div>
+                        <div class="text-indigo-200/80 text-xs mt-0.5">{{ $hs['label'] }}</div>
+                    </div>
+                </div>
+            @endforeach
         </div>
     </div>
 </div>
@@ -484,38 +516,43 @@ wire:key="reportes-panel"
     $diffTasa  = $actual['tasa_resolucion'] - $anterior['tasa_resolucion'];
 @endphp
 @if($anterior['total'] > 0 || $actual['total'] > 0)
-<div class="rounded-2xl border border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-5 mb-6 anim-fade">
-    <p class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-3">
-        Comparativa: Período Actual vs Anterior
-    </p>
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="text-center">
-            <p class="text-2xl font-bold text-gray-800 dark:text-gray-200">{{ $actual['total'] }}</p>
-            <p class="text-xs text-gray-500">Total actual</p>
+<div class="rounded-2xl border border-indigo-100 dark:border-indigo-800/60 bg-gradient-to-r from-indigo-50 via-blue-50 to-violet-50 dark:from-indigo-950/30 dark:via-blue-950/30 dark:to-violet-950/30 p-5 mb-6 anim-fade">
+    <div class="flex items-center gap-2 mb-4">
+        <div class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
         </div>
-        <div class="text-center">
-            <p class="text-2xl font-bold text-gray-500">{{ $anterior['total'] }}</p>
-            <p class="text-xs text-gray-400">Período anterior</p>
+        <p class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Comparativa: Período Actual vs Anterior</p>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-white/70 dark:bg-gray-800/60 backdrop-blur rounded-xl p-3 text-center border border-white dark:border-gray-700/50">
+            <p class="text-3xl font-black text-indigo-700 dark:text-indigo-300">{{ $actual['total'] }}</p>
+            <p class="text-xs text-gray-500 font-medium mt-0.5">Total actual</p>
         </div>
-        <div class="text-center">
+        <div class="bg-white/70 dark:bg-gray-800/60 backdrop-blur rounded-xl p-3 text-center border border-white dark:border-gray-700/50">
+            <p class="text-3xl font-black text-gray-400 dark:text-gray-500">{{ $anterior['total'] }}</p>
+            <p class="text-xs text-gray-400 font-medium mt-0.5">Período anterior</p>
+        </div>
+        <div class="bg-white/70 dark:bg-gray-800/60 backdrop-blur rounded-xl p-3 text-center border border-white dark:border-gray-700/50">
             @if($diffTotal > 0)
-                <p class="text-2xl font-bold text-red-600">+{{ $diffTotal }}</p>
-                <p class="text-xs text-red-500">Incremento</p>
+                <p class="text-3xl font-black text-red-600">+{{ $diffTotal }}</p>
+                <p class="text-xs text-red-500 font-medium mt-0.5">↑ Incremento</p>
             @elseif($diffTotal < 0)
-                <p class="text-2xl font-bold text-green-600">{{ $diffTotal }}</p>
-                <p class="text-xs text-green-500">Reducción</p>
+                <p class="text-3xl font-black text-emerald-600">{{ $diffTotal }}</p>
+                <p class="text-xs text-emerald-500 font-medium mt-0.5">↓ Reducción</p>
             @else
-                <p class="text-2xl font-bold text-gray-500">0</p>
-                <p class="text-xs text-gray-400">Sin cambio</p>
+                <p class="text-3xl font-black text-gray-500">0</p>
+                <p class="text-xs text-gray-400 font-medium mt-0.5">Sin cambio</p>
             @endif
         </div>
-        <div class="text-center">
+        <div class="bg-white/70 dark:bg-gray-800/60 backdrop-blur rounded-xl p-3 text-center border border-white dark:border-gray-700/50">
             @if($diffTasa >= 0)
-                <p class="text-2xl font-bold text-green-600">+{{ number_format($diffTasa, 1) }}%</p>
+                <p class="text-3xl font-black text-emerald-600">+{{ number_format($diffTasa, 1) }}%</p>
             @else
-                <p class="text-2xl font-bold text-red-600">{{ number_format($diffTasa, 1) }}%</p>
+                <p class="text-3xl font-black text-red-600">{{ number_format($diffTasa, 1) }}%</p>
             @endif
-            <p class="text-xs text-gray-500">Δ Tasa resolución</p>
+            <p class="text-xs text-gray-500 font-medium mt-0.5">Δ Tasa resolución</p>
         </div>
     </div>
 </div>
@@ -537,79 +574,97 @@ wire:key="reportes-panel"
         'sla_vencido' => 0,
         'tasa_resolucion' => 0,
     ], is_array($this->resumen) ? $this->resumen : []);
+    $diffTotal ??= 0;
+    $diffTasa  ??= 0;
 @endphp
 
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
 
     {{-- Total Cases --}}
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 p-6 shadow-lg kpi-card anim-scale d1" style="animation:pulse-ring 3s ease-in-out infinite">
-        <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10"></div>
-        <div class="absolute right-2 bottom-2 w-16 h-16 rounded-full bg-white/5"></div>
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-700 p-6 shadow-xl kpi-card anim-scale d1">
+        <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10"></div>
+        <div class="absolute right-4 bottom-3 w-14 h-14 rounded-full bg-white/5"></div>
         <div class="relative z-10">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shadow shadow-indigo-900/20">
+                    <svg class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
                 </div>
-                <span class="text-indigo-200 text-xs font-bold uppercase tracking-widest">Total Casos</span>
+                @if($diffTotal !== 0)
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full {{ $diffTotal > 0 ? 'bg-red-400/30 text-red-100' : 'bg-emerald-400/30 text-emerald-100' }}">
+                        {{ $diffTotal > 0 ? '↑' : '↓' }}{{ abs($diffTotal) }}
+                    </span>
+                @endif
             </div>
-            <div class="text-4xl font-black text-white anim-count d2">{{ number_format($r['total']) }}</div>
-            <p class="text-indigo-200/80 text-xs mt-2">Con filtros aplicados</p>
+            <div class="text-5xl font-black text-white anim-count d2 leading-none">{{ number_format($r['total']) }}</div>
+            <p class="text-indigo-200 text-xs font-semibold mt-2 uppercase tracking-widest">Total Casos</p>
+            <p class="text-indigo-300/70 text-xs mt-0.5">Con filtros aplicados</p>
         </div>
     </div>
 
     {{-- Resolution Rate --}}
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-6 shadow-lg kpi-card anim-scale d2">
-        <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10"></div>
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 p-6 shadow-xl kpi-card anim-scale d2">
+        <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10"></div>
         <div class="relative z-10">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                    <svg class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <span class="text-emerald-200 text-xs font-bold uppercase tracking-widest">Resolución</span>
+                @if($diffTasa !== 0)
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full {{ $diffTasa > 0 ? 'bg-emerald-300/30 text-emerald-100' : 'bg-red-400/30 text-red-100' }}">
+                        {{ $diffTasa > 0 ? '↑' : '↓' }}{{ number_format(abs($diffTasa),1) }}%
+                    </span>
+                @endif
             </div>
-            <div class="text-4xl font-black text-white anim-count d3">{{ $r['tasa_resolucion'] }}%</div>
-            <div class="w-full bg-white/20 rounded-full h-2 mt-3">
-                <div class="bg-white h-2 rounded-full progress-bar" style="width:{{ $r['tasa_resolucion'] }}%"></div>
+            <div class="text-5xl font-black text-white anim-count d3 leading-none">{{ $r['tasa_resolucion'] }}<span class="text-2xl">%</span></div>
+            <p class="text-emerald-200 text-xs font-semibold mt-2 uppercase tracking-widest">Tasa Resolución</p>
+            <div class="w-full bg-white/20 rounded-full h-1.5 mt-2">
+                <div class="bg-white h-1.5 rounded-full progress-bar" style="width:{{ $r['tasa_resolucion'] }}%"></div>
             </div>
         </div>
     </div>
 
     {{-- Unassigned --}}
-    <div class="relative overflow-hidden rounded-2xl p-6 shadow-lg kpi-card anim-scale d3
-        {{ $r['sin_asignar'] > 0 ? 'bg-gradient-to-br from-amber-500 to-orange-600' : 'bg-gradient-to-br from-gray-400 to-gray-500' }}">
-        <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10"></div>
+    <div class="relative overflow-hidden rounded-2xl p-6 shadow-xl kpi-card anim-scale d3
+        {{ $r['sin_asignar'] > 0 ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-orange-600' : 'bg-gradient-to-br from-gray-400 to-gray-500' }}">
+        <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10"></div>
         <div class="relative z-10">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                    <svg class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                     </svg>
                 </div>
-                <span class="text-white/80 text-xs font-bold uppercase tracking-widest">Sin Asignar</span>
+                @if($r['sin_asignar'] > 0)
+                    <span class="w-2.5 h-2.5 rounded-full bg-white/60 animate-ping"></span>
+                @endif
             </div>
-            <div class="text-4xl font-black text-white anim-count d4">{{ $r['sin_asignar'] }}</div>
-            <p class="text-white/70 text-xs mt-2">Pendientes de asignación</p>
+            <div class="text-5xl font-black text-white anim-count d4 leading-none">{{ $r['sin_asignar'] }}</div>
+            <p class="text-white/80 text-xs font-semibold mt-2 uppercase tracking-widest">Sin Asignar</p>
+            <p class="text-white/60 text-xs mt-0.5">Pendientes de asignación</p>
         </div>
     </div>
 
     {{-- Anonymous --}}
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 p-6 shadow-lg kpi-card anim-scale d4">
-        <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10"></div>
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 via-purple-600 to-purple-700 p-6 shadow-xl kpi-card anim-scale d4">
+        <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10"></div>
         <div class="relative z-10">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                    <svg class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                     </svg>
                 </div>
-                <span class="text-violet-200 text-xs font-bold uppercase tracking-widest">Anónimos</span>
+                <span class="text-xs font-bold text-violet-200">
+                    {{ $r['total'] > 0 ? round(($r['anonimos'] / $r['total']) * 100, 1) : 0 }}%
+                </span>
             </div>
-            <div class="text-4xl font-black text-white anim-count d5">{{ $r['anonimos'] }}</div>
-            <p class="text-violet-200/80 text-xs mt-2">{{ $r['total'] > 0 ? round(($r['anonimos'] / $r['total']) * 100, 1) : 0 }}% del total</p>
+            <div class="text-5xl font-black text-white anim-count d5 leading-none">{{ $r['anonimos'] }}</div>
+            <p class="text-violet-200 text-xs font-semibold mt-2 uppercase tracking-widest">Anónimos</p>
+            <p class="text-violet-300/60 text-xs mt-0.5">Del total de casos</p>
         </div>
     </div>
 
@@ -703,31 +758,30 @@ wire:key="reportes-panel"
 {{-- ═══════════════════════════════════════════
      TAB NAVIGATION
 ═══════════════════════════════════════════ --}}
-<div class="flex flex-wrap gap-2 mb-6 p-1.5 bg-gray-100 dark:bg-gray-800/80 rounded-2xl overflow-x-auto no-print">
-    <button @click="activeTab = 'general'; $nextTick(() => initCharts())"
-            :class="activeTab === 'general' ? 'tab-active' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'"
-            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        General
-    </button>
-    <button @click="activeTab = 'table'"
-            :class="activeTab === 'table' ? 'tab-active' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'"
-            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-        Tabla de Datos
-    </button>
-    <button @click="activeTab = 'export'"
-            :class="activeTab === 'export' ? 'tab-active' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'"
-            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Exportar
-    </button>
-    <button @click="activeTab = 'psicologos'; $nextTick(() => initCharts())"
-            :class="activeTab === 'psicologos' ? 'tab-active' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'"
-            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        Psicólogos
-    </button>
+{{-- ── TAB BAR ─────────────────────────────────────────────────────────────── --}}
+<div class="flex flex-wrap gap-1.5 mb-6 p-1.5 bg-gray-100 dark:bg-gray-800/80 rounded-2xl overflow-x-auto no-print shadow-inner">
+    @php
+        $tabs = [
+            ['id'=>'general',    'label'=>'General',       'icon'=>'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', 'init'=>true],
+            ['id'=>'charts',     'label'=>'Gráficas',      'icon'=>'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z', 'init'=>true],
+            ['id'=>'table',      'label'=>'Tabla de Datos','icon'=>'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', 'init'=>false],
+            ['id'=>'psicologos', 'label'=>'Psicólogos',    'icon'=>'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', 'init'=>true],
+            ['id'=>'export',     'label'=>'Exportar',      'icon'=>'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4', 'init'=>false],
+        ];
+    @endphp
+    @foreach($tabs as $tab)
+        <button
+            @click="activeTab = '{{ $tab['id'] }}'; {{ $tab['init'] ? '$nextTick(() => initCharts())' : '' }}"
+            :class="activeTab === '{{ $tab['id'] }}' ? 'tab-active' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700'"
+            class="tab-btn px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $tab['icon'] }}"/></svg>
+            {{ $tab['label'] }}
+            @if($tab['id'] === 'export')
+                <span class="ml-1 px-1.5 py-0.5 rounded-md text-xs font-bold"
+                      :class="activeTab === 'export' ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300'">↓</span>
+            @endif
+        </button>
+    @endforeach
 </div>
 
 {{-- ═══════════════════════════════════════════
@@ -1241,6 +1295,7 @@ wire:key="reportes-panel"
                         <th class="px-5 py-4 text-left font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">Código</th>
                         <th class="px-5 py-4 text-left font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">Tipo</th>
                         <th class="px-5 py-4 text-left font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">Estado</th>
+                        <th class="px-5 py-4 text-left font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">Prioridad</th>
                         <th class="px-5 py-4 text-left font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">Denunciante</th>
                         <th class="px-5 py-4 text-left font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">Asignado</th>
                         <th class="px-5 py-4 text-left font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">Región</th>
@@ -1249,11 +1304,19 @@ wire:key="reportes-panel"
                 </thead>
                 <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
                     @forelse($this->ultimosCasos as $caso)
-                        <tr class="hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10 transition-colors duration-150 group">
+                        @php
+                            $priRowColor = match($caso->prioridad ?? '') {
+                                'urgente' => 'border-l-4 border-l-red-500',
+                                'alta'    => 'border-l-4 border-l-orange-400',
+                                'media'   => 'border-l-4 border-l-amber-400',
+                                default   => 'border-l-4 border-l-transparent',
+                            };
+                        @endphp
+                        <tr class="hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10 transition-colors duration-150 group {{ $priRowColor }}">
                             <td class="px-5 py-4">
-                                <span class="font-mono font-black text-indigo-600 dark:text-indigo-400 text-xs tracking-wider bg-indigo-50 dark:bg-indigo-900/20 px-2.5 py-1 rounded-lg">
+                                <a href="{{ url('/admin/casos/'.$caso->id) }}" class="font-mono font-black text-indigo-600 dark:text-indigo-400 text-xs tracking-wider bg-indigo-50 dark:bg-indigo-900/20 px-2.5 py-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors">
                                     {{ $caso->codigo_caso }}
-                                </span>
+                                </a>
                             </td>
                             <td class="px-5 py-4">
                                 <span class="px-2.5 py-1 rounded-lg text-xs font-bold {{ $colorTipoT[$caso->tipo_violencia] ?? $colorTipoT['otro'] }}">
@@ -1263,6 +1326,20 @@ wire:key="reportes-panel"
                             <td class="px-5 py-4">
                                 <span class="px-3 py-1 rounded-full text-xs font-bold {{ $estadoBadge[$caso->estado] ?? 'bg-gray-100 text-gray-600' }}">
                                     {{ ucfirst(str_replace('_', ' ', $caso->estado)) }}
+                                </span>
+                            </td>
+                            <td class="px-5 py-4">
+                                @php
+                                    $priBadge = match($caso->prioridad ?? '') {
+                                        'urgente' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+                                        'alta'    => 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+                                        'media'   => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+                                        'baja'    => 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+                                        default   => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+                                    };
+                                @endphp
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-bold {{ $priBadge }}">
+                                    {{ ucfirst($caso->prioridad ?? 'normal') }}
                                 </span>
                             </td>
                             <td class="px-5 py-4 text-gray-600 dark:text-gray-400">
@@ -1301,7 +1378,7 @@ wire:key="reportes-panel"
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-5 py-20 text-center">
+                            <td colspan="8" class="px-5 py-20 text-center">
                                 <div class="inline-flex flex-col items-center gap-4 text-gray-300">
                                     <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                                         <svg class="w-8 h-8 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

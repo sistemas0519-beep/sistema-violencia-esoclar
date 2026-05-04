@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\ActividadSistema;
 use App\Models\Caso;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -132,10 +133,35 @@ class ControladorDenuncias extends Controller
                 ->orderByDesc('created_at');
             }
 
-            $resultados = $query->paginate(2)->withQueryString();
+            $resultados = $query->paginate(1)->withQueryString();
         }
 
         return view('consultar-expediente', compact('resultados', 'busqueda', 'tipo', 'buscado'));
+    }
+
+    /**
+     * Registra un evento de auto-refresh en ActividadSistema.
+     * Llamado desde la página pública via POST /log-auto-refresh (sendBeacon).
+     * No requiere autenticación. Rate-limiting aplicado en routes/web.php.
+     */
+    public function logAutoRefresh(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'tipo'   => 'required|string|max:50',
+            'url'    => 'nullable|string|max:500',
+            'agente' => 'nullable|string|max:200',
+            'ts'     => 'nullable|string|max:30',
+        ]);
+
+        ActividadSistema::info('auto_refresh_expediente', 'Auto-refresh ejecutado en consulta pública de expediente', [
+            'tipo_evento' => $validated['tipo'],
+            'url'         => $validated['url'] ?? null,
+            'user_agent'  => $validated['agente'] ?? null,
+            'timestamp'   => $validated['ts'] ?? null,
+            'ip'          => $request->ip(),
+        ]);
+
+        return response()->json(['ok' => true]);
     }
 
     /** Mis casos (alumno autenticado) */

@@ -82,6 +82,13 @@
             box-shadow: 0 4px 15px rgba(99,102,241,0.2);
         }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.35); }
+        .btn-consulta {
+            color: #fff;
+            background: linear-gradient(135deg, #0d9488, #0284c7);
+            border: 1px solid rgba(13,148,136,0.5);
+            box-shadow: 0 4px 15px rgba(13,148,136,0.2);
+        }
+        .btn-consulta:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(13,148,136,0.35); }
 
         /* ── Hero ── */
         .hero {
@@ -394,6 +401,12 @@
     </a>
 
     <div class="nav-actions">
+        <a href="{{ route('consultar.expediente') }}" class="btn btn-consulta">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Consultar Denuncia
+        </a>
         @auth
             <a href="{{ url('/dashboard') }}" class="btn btn-primary">
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -425,10 +438,16 @@
     </p>
 
     <div class="hero-cta">
+        <a href="{{ route('consultar.expediente') }}" class="btn btn-consulta btn-lg">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Consultar Denuncia
+        </a>
         @auth
             <a href="{{ url('/dashboard') }}" class="btn btn-primary btn-lg">Ir a mi Panel →</a>
         @else
-            <a href="{{ route('login') }}" class="btn btn-primary btn-lg">Iniciar Sesión →</a>
+            <a href="{{ route('login') }}" class="btn btn-ghost btn-lg">Iniciar Sesión →</a>
             @if (Route::has('register'))
                 <a href="{{ route('register') }}" class="btn btn-ghost btn-lg">Crear cuenta</a>
             @endif
@@ -668,13 +687,44 @@
             @endphp
 
             @if($resultados && $resultados->isNotEmpty())
-                <p class="results-header">
-                    {{ $resultados->total() }} resultado{{ $resultados->total() !== 1 ? 's' : '' }}
-                    para «{{ $busqueda }}»
-                    @if($resultados->lastPage() > 1)
-                        &mdash; página {{ $resultados->currentPage() }} de {{ $resultados->lastPage() }}
+                {{-- ── Barra superior de resultados y paginación ── --}}
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; margin-bottom:1rem; padding:.85rem 1.1rem; background:rgba(99,102,241,.08); border:1px solid rgba(99,102,241,.2); border-radius:12px;">
+                    <p style="margin:0; font-size:.875rem; color:var(--text-muted);">
+                        <strong style="color:var(--text-primary); font-size:1rem;">{{ $resultados->total() }}</strong>
+                        resultado{{ $resultados->total() !== 1 ? 's' : '' }} para
+                        «<span style="color:var(--accent);">{{ $busqueda }}</span>»
+                        @if($resultados->lastPage() > 1)
+                            &nbsp;·&nbsp; expediente <strong style="color:var(--text-primary);">{{ $resultados->currentPage() }}</strong> de <strong style="color:var(--text-primary);">{{ $resultados->lastPage() }}</strong>
+                        @endif
+                    </p>
+                    @if($resultados->hasPages())
+                        <div class="pagination-wrap" style="margin:0;">
+                            @if($resultados->onFirstPage())
+                                <span class="page-btn page-btn-disabled">
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                                    Anterior
+                                </span>
+                            @else
+                                <a href="{{ $resultados->previousPageUrl() }}#consulta" class="page-btn">
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                                    Anterior
+                                </a>
+                            @endif
+                            <span class="page-info">{{ $resultados->currentPage() }} / {{ $resultados->lastPage() }}</span>
+                            @if($resultados->hasMorePages())
+                                <a href="{{ $resultados->nextPageUrl() }}#consulta" class="page-btn">
+                                    Siguiente
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </a>
+                            @else
+                                <span class="page-btn page-btn-disabled">
+                                    Siguiente
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                </span>
+                            @endif
+                        </div>
                     @endif
-                </p>
+                </div>
 
                 @foreach($resultados as $caso)
                     <div class="caso-card">

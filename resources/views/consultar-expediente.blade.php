@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Consultar Expediente — Sistema de Violencia Escolar</title>
     <meta name="description" content="Consulta el estado de tu expediente ingresando tu número de caso o tu nombre completo.">
 
@@ -302,6 +303,120 @@
             border: 1px solid var(--border);
             border-radius: 10px;
         }
+
+        /* ── Mode tabs ── */
+        .mode-tabs {
+            display: flex; gap: .4rem; margin-bottom: 2rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 14px; padding: .35rem;
+        }
+        .mode-tab {
+            flex: 1; padding: .65rem 1rem;
+            border: none; background: transparent;
+            color: var(--text-muted); font-size: .875rem; font-weight: 500;
+            border-radius: 10px; cursor: pointer; font-family: inherit;
+            transition: all .2s; display: flex; align-items: center; justify-content: center; gap: .45rem;
+        }
+        .mode-tab.active {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff; box-shadow: 0 2px 12px rgba(99,102,241,0.35);
+        }
+        .mode-tab:hover:not(.active) { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+
+        /* ── Section visibility ── */
+        .search-section { display: block; }
+        .search-section.hidden { display: none; }
+        .login-section { display: none; }
+        .login-section.visible { display: block; }
+
+        /* ── Login ── */
+        .login-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 2rem; margin-bottom: 1.5rem;
+        }
+        .login-logged-in {
+            text-align: center; padding: 3rem 2rem;
+            background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 20px; margin-bottom: 1.5rem;
+        }
+        .logged-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .login-logged-in h3 { font-size: 1.25rem; font-weight: 800; margin-bottom: .5rem; }
+        .login-logged-in p { color: var(--text-muted); font-size: .9rem; margin-bottom: 1.75rem; }
+        .btn-goto-panel {
+            display: inline-flex; align-items: center; gap: .5rem;
+            padding: .8rem 2rem; border-radius: 10px;
+            background: linear-gradient(135deg, #10b981, #0d9488);
+            color: #fff; font-size: 1rem; font-weight: 700;
+            text-decoration: none; transition: all .25s;
+            box-shadow: 0 4px 18px rgba(16,185,129,0.28);
+        }
+        .btn-goto-panel:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(16,185,129,0.4); }
+        .profiles-section-title {
+            font-size: .78rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: .75rem;
+        }
+        .profiles-grid-login {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: .6rem; margin-bottom: 1.5rem;
+        }
+        @media (max-width: 480px) { .profiles-grid-login { grid-template-columns: 1fr; } }
+        .profile-card-login {
+            display: flex; align-items: center; gap: .65rem;
+            padding: .7rem .85rem; border-radius: 12px;
+            background: rgba(255,255,255,0.03); border: 2px solid var(--border);
+            cursor: pointer; transition: all .2s ease;
+            text-align: left; font-family: inherit; width: 100%;
+        }
+        .profile-card-login:hover {
+            border-color: var(--border-hover); background: rgba(255,255,255,0.06);
+            transform: translateY(-1px);
+        }
+        .profile-card-login.active {
+            border-color: var(--pc, rgba(99,102,241,.6));
+            background: var(--pc-bg, rgba(99,102,241,.08));
+        }
+        .profile-icon-login {
+            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 1rem;
+        }
+        .profile-name-login { font-size: .82rem; font-weight: 700; color: var(--text-primary); }
+        .profile-desc-login { font-size: .71rem; color: var(--text-muted); margin-top: .1rem; }
+        .login-field { margin-bottom: 1rem; }
+        .login-field label { display: block; font-size: .78rem; font-weight: 600; color: var(--text-muted); letter-spacing: .04em; text-transform: uppercase; margin-bottom: .45rem; }
+        .login-field-wrap { position: relative; }
+        .login-field-icon { position: absolute; left: .85rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+        .login-field-wrap input {
+            width: 100%; padding: .75rem 1rem .75rem 2.5rem;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text-primary); font-size: .9rem;
+            font-family: inherit; outline: none; transition: border-color .2s, box-shadow .2s;
+        }
+        .login-field-wrap input::placeholder { color: var(--text-muted); opacity: .6; }
+        .login-field-wrap input:focus { border-color: rgba(99,102,241,.5); box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+        .login-field-wrap input.err { border-color: rgba(239,68,68,.5); }
+        .login-err-msg { font-size: .75rem; color: #f87171; margin-top: .3rem; }
+        .login-check-row { display: flex; align-items: center; justify-content: space-between; margin: 1rem 0; }
+        .login-check-label { display: flex; align-items: center; gap: .5rem; cursor: pointer; font-size: .82rem; color: var(--text-muted); }
+        .login-check-label input[type="checkbox"] { width: 15px; height: 15px; accent-color: #6366f1; }
+        .login-forgot { font-size: .8rem; color: #818cf8; text-decoration: none; }
+        .login-forgot:hover { text-decoration: underline; }
+        .btn-login-submit {
+            width: 100%; padding: .85rem;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: none; border-radius: 10px;
+            color: #fff; font-size: .95rem; font-weight: 600;
+            font-family: inherit; cursor: pointer;
+            transition: all .25s; box-shadow: 0 4px 18px rgba(99,102,241,.28);
+        }
+        .btn-login-submit:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(99,102,241,.42); }
+        .login-divider { display: flex; align-items: center; gap: 1rem; margin: 1.2rem 0; color: var(--text-muted); font-size: .75rem; }
+        .login-divider::before, .login-divider::after { content:''; flex:1; height:1px; background: var(--border); }
+        .login-register-row { text-align: center; font-size: .82rem; color: var(--text-muted); }
+        .login-register-row a { color: #818cf8; text-decoration: none; font-weight: 600; }
+        .login-register-row a:hover { text-decoration: underline; }
+        .login-status { padding: .7rem 1rem; border-radius: 10px; margin-bottom: 1rem; background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.25); color: #34d399; font-size: .82rem; }
+        .login-alert { padding: .75rem 1rem; border-radius: 10px; margin-bottom: 1rem; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2); color: #f87171; font-size: .85rem; }
     </style>
 </head>
 <body>
@@ -328,6 +443,25 @@
 </nav>
 
 <div class="page-wrap">
+
+    <!-- ── Mode switcher ── -->
+    <div class="mode-tabs">
+        <button type="button" class="mode-tab active" id="tabBtnConsultar" onclick="switchTab('consultar')">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Consultar Expediente
+        </button>
+        <button type="button" class="mode-tab" id="tabBtnLogin" onclick="switchTab('login')">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+            </svg>
+            Iniciar Sesión
+        </button>
+    </div>
+
+    <!-- ── Tab: Consultar Expediente ── -->
+    <div id="tab-consultar" class="search-section">
 
     <!-- Header -->
     <div class="page-badge">
@@ -444,6 +578,37 @@
                 @endif
             </p>
 
+            {{-- Paginación superior --}}
+            @if($resultados->hasPages())
+                <div class="pagination-wrap" style="margin-top:.5rem; margin-bottom:1.25rem;">
+                    @if($resultados->onFirstPage())
+                        <span class="page-btn page-btn-disabled">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                            Anterior
+                        </span>
+                    @else
+                        <a href="{{ $resultados->previousPageUrl() }}" class="page-btn">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                            Anterior
+                        </a>
+                    @endif
+
+                    <span class="page-info">{{ $resultados->currentPage() }} / {{ $resultados->lastPage() }}</span>
+
+                    @if($resultados->hasMorePages())
+                        <a href="{{ $resultados->nextPageUrl() }}" class="page-btn">
+                            Siguiente
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </a>
+                    @else
+                        <span class="page-btn page-btn-disabled">
+                            Siguiente
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </span>
+                    @endif
+                </div>
+            @endif
+
             @foreach($resultados as $caso)
                 <div class="caso-card">
                     <div class="caso-header">
@@ -544,12 +709,213 @@
         @endif
     @endif
 
+    </div>{{-- /tab-consultar --}}
+
+    <!-- ══════════════════════════════════════════════════════════════
+         Tab: Iniciar Sesión
+         Permite acceder con perfiles: alumno, docente, psicologo/apoyo, admin
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div id="tab-login" class="login-section">
+
+        @auth
+            {{-- Ya autenticado --}}
+            <div class="login-logged-in">
+                <div class="logged-icon">✅</div>
+                <h3>Sesión activa</h3>
+                <p>
+                    Has iniciado sesión como
+                    <strong style="color:var(--text-primary)">{{ auth()->user()->name }}</strong>
+                    ({{ auth()->user()->rol }}).
+                </p>
+                <a href="{{ url('/dashboard') }}" class="btn-goto-panel">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    Ir a mi Panel
+                </a>
+            </div>
+        @else
+            <div class="login-card">
+
+                {{-- Status (password reset, etc.) --}}
+                @if(session('status'))
+                    <div class="login-status">{{ session('status') }}</div>
+                @endif
+
+                {{-- Errores de autenticación --}}
+                @if($errors->has('email') || $errors->has('password'))
+                    <div class="login-alert">
+                        @foreach($errors->only(['email', 'password']) as $err)
+                            <p>{{ $err }}</p>
+                        @endforeach
+                    </div>
+                @endif
+
+                <!-- Selector de perfil -->
+                <div class="profiles-section-title">Selecciona tu perfil de acceso</div>
+                <div class="profiles-grid-login">
+
+                    <button type="button" class="profile-card-login"
+                            style="--pc:rgba(245,158,11,.6);--pc-bg:rgba(245,158,11,.08);"
+                            onclick="selectLoginProfile('alumno@escuela.edu','password',this)">
+                        <div class="profile-icon-login" style="background:rgba(245,158,11,.15)">🎓</div>
+                        <div>
+                            <div class="profile-name-login">Alumno</div>
+                            <div class="profile-desc-login">Seguimiento de tu denuncia</div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="profile-card-login"
+                            style="--pc:rgba(59,130,246,.6);--pc-bg:rgba(59,130,246,.08);"
+                            onclick="selectLoginProfile('docente@escuela.edu','password',this)">
+                        <div class="profile-icon-login" style="background:rgba(59,130,246,.15)">📚</div>
+                        <div>
+                            <div class="profile-name-login">Docente / Tutor</div>
+                            <div class="profile-desc-login">Reportar y hacer seguimiento</div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="profile-card-login"
+                            style="--pc:rgba(16,185,129,.6);--pc-bg:rgba(16,185,129,.08);"
+                            onclick="selectLoginProfile('psicologo@escuela.edu','password',this)">
+                        <div class="profile-icon-login" style="background:rgba(16,185,129,.15)">🧠</div>
+                        <div>
+                            <div class="profile-name-login">Psicólogo / Apoyo</div>
+                            <div class="profile-desc-login">Panel de casos y sesiones</div>
+                        </div>
+                    </button>
+
+                    <button type="button" class="profile-card-login"
+                            style="--pc:rgba(239,68,68,.6);--pc-bg:rgba(239,68,68,.08);"
+                            onclick="selectLoginProfile('admin@escuela.edu','password',this)">
+                        <div class="profile-icon-login" style="background:rgba(239,68,68,.15)">🛡️</div>
+                        <div>
+                            <div class="profile-name-login">Administrador</div>
+                            <div class="profile-desc-login">Panel de administración</div>
+                        </div>
+                    </button>
+
+                </div>
+
+                <!-- Formulario de login -->
+                <form method="POST" action="{{ route('login') }}" id="loginFormExpediente">
+                    @csrf
+
+                    <div class="login-field">
+                        <label for="login_email">Correo Electrónico</label>
+                        <div class="login-field-wrap">
+                            <span class="login-field-icon">
+                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                            </span>
+                            <input type="email" id="login_email" name="email"
+                                   value="{{ old('email') }}"
+                                   placeholder="tu@correo.edu"
+                                   required autocomplete="username"
+                                   class="{{ $errors->has('email') ? 'err' : '' }}">
+                        </div>
+                        @error('email') <p class="login-err-msg">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="login-field">
+                        <label for="login_password">Contraseña</label>
+                        <div class="login-field-wrap">
+                            <span class="login-field-icon">
+                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                            </span>
+                            <input type="password" id="login_password" name="password"
+                                   placeholder="••••••••"
+                                   required autocomplete="current-password"
+                                   class="{{ $errors->has('password') ? 'err' : '' }}">
+                        </div>
+                        @error('password') <p class="login-err-msg">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="login-check-row">
+                        <label class="login-check-label">
+                            <input type="checkbox" name="remember" id="login_remember">
+                            <span>Recordarme</span>
+                        </label>
+                        @if(Route::has('password.request'))
+                            <a href="{{ route('password.request') }}" class="login-forgot">¿Olvidaste tu contraseña?</a>
+                        @endif
+                    </div>
+
+                    <button type="submit" class="btn-login-submit">Iniciar Sesión →</button>
+
+                    @if(Route::has('register'))
+                        <div class="login-divider">o</div>
+                        <div class="login-register-row">
+                            ¿No tienes cuenta? <a href="{{ route('register') }}">Regístrate aquí</a>
+                        </div>
+                    @endif
+                </form>
+
+            </div>
+        @endauth
+
+    </div>{{-- /tab-login --}}
+
 </div>
 
 <footer>
     <p>© {{ date('Y') }} Sistema de Prevención de Violencia Escolar · Todos los derechos reservados.</p>
     <p style="margin-top:.4rem;">Plataforma confidencial y segura · Construida con Laravel &amp; Filament</p>
 </footer>
+
+<script>
+/* ── Tab switcher ── */
+function switchTab(tab) {
+    var elConsultar  = document.getElementById('tab-consultar');
+    var elLogin      = document.getElementById('tab-login');
+    var btnConsultar = document.getElementById('tabBtnConsultar');
+    var btnLogin     = document.getElementById('tabBtnLogin');
+
+    if (tab === 'login') {
+        elConsultar.classList.add('hidden');
+        elLogin.classList.add('visible');
+        btnLogin.classList.add('active');
+        btnConsultar.classList.remove('active');
+    } else {
+        elConsultar.classList.remove('hidden');
+        elLogin.classList.remove('visible');
+        btnConsultar.classList.add('active');
+        btnLogin.classList.remove('active');
+    }
+
+    /* Actualizar URL sin recargar */
+    try {
+        var url = new URL(window.location.href);
+        url.searchParams.set('tab', tab);
+        window.history.replaceState({}, '', url.toString());
+    } catch (e) {}
+}
+
+function selectLoginProfile(email, pass, card) {
+    document.querySelectorAll('.profile-card-login').forEach(function(c) {
+        c.classList.remove('active');
+    });
+    card.classList.add('active');
+    document.getElementById('login_email').value    = email;
+    document.getElementById('login_password').value = pass;
+}
+
+/* Inicialización: activar tab según URL o errores de auth */
+(function () {
+    var hasLoginErrors = @json($errors->has('email') || $errors->has('password'));
+    var tabParam = '';
+    try {
+        tabParam = new URL(window.location.href).searchParams.get('tab') || '';
+    } catch (e) {}
+
+    if (tabParam === 'login' || hasLoginErrors) {
+        switchTab('login');
+    }
+})();
+</script>
 
 <script>
     function setTipo(valor, btn) {
@@ -574,6 +940,270 @@
         input.value = '';
         input.focus();
     }
+</script>
+
+{{-- ═══════════════════════════════════════════════════════════════════════════
+     AUTO-REFRESH POR INACTIVIDAD
+     Solo se activa cuando el usuario ha realizado una búsqueda ($buscado=true).
+
+     Métricas del sistema:
+       · CheckSessionTimeout::TIMEOUT_MINUTES = 30 min  (sesión autenticada)
+       · SESSION_LIFETIME = 30 min
+       · Umbral de inactividad pública = 5 min  (1/6 del ciclo de sesión)
+         → apropiado para terminal/quiosco de consulta pública
+
+     Funcionalidades:
+       · Detección de inactividad: mousemove, click, keydown, scroll, touch, wheel
+       · Sincronización cross-tab via BroadcastChannel + localStorage fallback
+       · Intercepta XHR/fetch pendientes → pospone el refresh
+       · Detecta modales/dropdowns abiertos → pospone el refresh
+       · Banner de aviso con cuenta regresiva (30 s) antes de refrescar
+       · Logging server-side via POST /log-auto-refresh (ActividadSistema)
+       · Logging local en localStorage (últimas 20 entradas)
+══════════════════════════════════════════════════════════════════════════════ --}}
+<script>
+(function () {
+    'use strict';
+
+    // ── Configuración ─────────────────────────────────────────────────────────
+    // INACTIVITY_TIMEOUT: derivado de SESSION_LIFETIME(30min)/6 = 5 min.
+    // Para ajustar, modificar solo este valor (en segundos).
+    var CONFIG = {
+        INACTIVITY_TIMEOUT : 300,               // segundos (5 min) antes del aviso
+        WARNING_COUNTDOWN  : 30,                // segundos de cuenta regresiva visible
+        STORAGE_KEY        : 'sve_expediente_actividad', // clave localStorage cross-tab
+        CHANNEL_NAME       : 'sve_expediente_refresh',  // BroadcastChannel id
+        LOG_ENDPOINT       : '/log-auto-refresh',
+        CSRF_TOKEN         : (document.querySelector('meta[name="csrf-token"]') || {}).content || '',
+        REFRESH_URL        : '/consultar-expediente',
+    };
+
+    // ── ¿Hay resultados visibles? Solo activar tras una búsqueda ─────────────
+    var BUSQUEDA_ACTIVA = @json($buscado);
+    if (!BUSQUEDA_ACTIVA) return;
+
+    // ── Estado interno ────────────────────────────────────────────────────────
+    var inactivityTimer  = null;
+    var countdownTimer   = null;
+    var countdownSeconds = CONFIG.WARNING_COUNTDOWN;
+    var pendingRequests  = 0;
+    var bannerEl         = null;
+    var refreshChannel   = null;
+    var refreshScheduled = false;
+
+    // ── Interceptar XHR para contar solicitudes pendientes ───────────────────
+    var origOpen = XMLHttpRequest.prototype.open;
+    var origSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function () {
+        this._sveTracked = true;
+        return origOpen.apply(this, arguments);
+    };
+    XMLHttpRequest.prototype.send = function () {
+        if (this._sveTracked) {
+            pendingRequests++;
+            this.addEventListener('loadend', function () {
+                pendingRequests = Math.max(0, pendingRequests - 1);
+            });
+        }
+        return origSend.apply(this, arguments);
+    };
+
+    // Interceptar fetch
+    var origFetch = window.fetch;
+    window.fetch = function () {
+        pendingRequests++;
+        var args = arguments;
+        return origFetch.apply(this, args).finally(function () {
+            pendingRequests = Math.max(0, pendingRequests - 1);
+        });
+    };
+
+    // ── BroadcastChannel (sincronización entre pestañas) ─────────────────────
+    if ('BroadcastChannel' in window) {
+        try {
+            refreshChannel = new BroadcastChannel(CONFIG.CHANNEL_NAME);
+            refreshChannel.onmessage = function (e) {
+                if (!e.data) return;
+                if (e.data.type === 'activity') {
+                    // Otra pestaña tuvo actividad → resetear sin propagar de vuelta
+                    resetTimerSilent();
+                }
+                if (e.data.type === 'refresh') {
+                    // Otra pestaña ejecutó el refresh → seguirla
+                    doRefresh(false);
+                }
+            };
+        } catch (_) {}
+    }
+
+    // ── Detectar modales / dropdowns activos ─────────────────────────────────
+    function hasActiveModal() {
+        if (document.querySelector('dialog[open]'))               return true;
+        if (document.querySelector('[aria-expanded="true"]'))     return true;
+        if (document.querySelector('[data-headlessui-state="open"]')) return true;
+        if (document.querySelector('.dropdown-open, .modal-open')) return true;
+        // El formulario de búsqueda tiene foco → no interrumpir
+        var focused = document.activeElement;
+        if (focused && (focused.tagName === 'INPUT' || focused.tagName === 'TEXTAREA' || focused.tagName === 'SELECT')) {
+            return true;
+        }
+        return false;
+    }
+
+    // ── Crear banner de aviso ─────────────────────────────────────────────────
+    function crearBanner() {
+        if (bannerEl) return;
+        bannerEl = document.createElement('div');
+        bannerEl.id = 'sve-auto-refresh-banner';
+        bannerEl.setAttribute('role', 'alert');
+        bannerEl.setAttribute('aria-live', 'assertive');
+        bannerEl.style.cssText = [
+            'position:fixed', 'bottom:1.5rem', 'left:50%', 'transform:translateX(-50%)',
+            'z-index:99999', 'display:flex', 'align-items:center', 'gap:.875rem',
+            'padding:.875rem 1.25rem', 'border-radius:12px',
+            'max-width:500px', 'width:calc(100% - 3rem)',
+            'background:#141720', 'border:1px solid rgba(99,102,241,0.45)',
+            'box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 0 1px rgba(99,102,241,0.08)',
+            'font-family:Inter,sans-serif', 'font-size:.875rem', 'color:#f0f2f8',
+            'animation:sveBannerIn .3s cubic-bezier(.4,0,.2,1)',
+        ].join(';');
+
+        bannerEl.innerHTML =
+            '<style>' +
+            '@keyframes sveBannerIn{from{opacity:0;transform:translateX(-50%) translateY(.75rem)}to{opacity:1;transform:translateX(-50%) translateY(0)}}' +
+            '#sve-auto-refresh-banner .svebi{flex-shrink:0;width:36px;height:36px;border-radius:8px;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center}' +
+            '#sve-auto-refresh-banner .svetx{flex:1;min-width:0}' +
+            '#sve-auto-refresh-banner .svetitle{font-weight:600;margin-bottom:.15rem}' +
+            '#sve-auto-refresh-banner .svesub{color:#8b92a9;font-size:.8rem}' +
+            '#sve-auto-refresh-banner .svecnt{font-size:1.1rem;font-weight:700;color:#818cf8;min-width:2.25rem;text-align:center}' +
+            '#sve-auto-refresh-banner .svedis{flex-shrink:0;padding:.35rem .85rem;border-radius:6px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#8b92a9;cursor:pointer;font-size:.8rem;font-family:inherit;transition:all .15s}' +
+            '#sve-auto-refresh-banner .svedis:hover{background:rgba(255,255,255,.06);color:#f0f2f8;border-color:rgba(255,255,255,.22)}' +
+            '</style>' +
+            '<div class="svebi">' +
+                '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#818cf8" stroke-width="2">' +
+                    '<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>' +
+                '</svg>' +
+            '</div>' +
+            '<div class="svetx">' +
+                '<div class="svetitle">Pantalla inactiva</div>' +
+                '<div class="svesub">La consulta se reiniciará en</div>' +
+            '</div>' +
+            '<div class="svecnt" id="sve-ar-cnt">' + CONFIG.WARNING_COUNTDOWN + 's</div>' +
+            '<button class="svedis" id="sve-ar-dismiss" type="button">Continuar</button>';
+
+        document.body.appendChild(bannerEl);
+        document.getElementById('sve-ar-dismiss').addEventListener('click', cancelarCuentaRegresiva);
+    }
+
+    function quitarBanner() {
+        if (bannerEl) { bannerEl.remove(); bannerEl = null; }
+    }
+
+    // ── Ejecutar el refresh ───────────────────────────────────────────────────
+    function doRefresh(notifyOtherTabs) {
+        if (refreshScheduled) return;
+        refreshScheduled = true;
+        quitarBanner();
+        registrarEvento();
+        if (notifyOtherTabs && refreshChannel) {
+            try { refreshChannel.postMessage({ type: 'refresh' }); } catch (_) {}
+        }
+        window.location.href = CONFIG.REFRESH_URL;
+    }
+
+    // ── Iniciar cuenta regresiva ──────────────────────────────────────────────
+    function iniciarCuentaRegresiva() {
+        // Posponer si hay solicitudes pendientes o un elemento interactivo activo
+        if (pendingRequests > 0 || hasActiveModal()) {
+            resetTimerSilent();
+            return;
+        }
+        countdownSeconds = CONFIG.WARNING_COUNTDOWN;
+        crearBanner();
+        countdownTimer = setInterval(function () {
+            countdownSeconds--;
+            var el = document.getElementById('sve-ar-cnt');
+            if (el) el.textContent = countdownSeconds + 's';
+            if (countdownSeconds <= 0) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+                doRefresh(true);
+            }
+        }, 1000);
+    }
+
+    // ── Cancelar cuenta regresiva (usuario sigue activo) ─────────────────────
+    function cancelarCuentaRegresiva() {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+        quitarBanner();
+    }
+
+    // ── Resetear temporizador con propagación cross-tab ───────────────────────
+    function resetTimer() {
+        clearTimeout(inactivityTimer);
+        cancelarCuentaRegresiva();
+        // Sincronizar con otras pestañas
+        try { localStorage.setItem(CONFIG.STORAGE_KEY, String(Date.now())); } catch (_) {}
+        if (refreshChannel) {
+            try { refreshChannel.postMessage({ type: 'activity' }); } catch (_) {}
+        }
+        inactivityTimer = setTimeout(iniciarCuentaRegresiva, CONFIG.INACTIVITY_TIMEOUT * 1000);
+    }
+
+    // ── Resetear sin propagar (evita bucles cross-tab) ────────────────────────
+    function resetTimerSilent() {
+        clearTimeout(inactivityTimer);
+        cancelarCuentaRegresiva();
+        inactivityTimer = setTimeout(iniciarCuentaRegresiva, CONFIG.INACTIVITY_TIMEOUT * 1000);
+    }
+
+    // ── Escuchar eventos de actividad del usuario ─────────────────────────────
+    var ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'touchmove', 'wheel', 'click'];
+    ACTIVITY_EVENTS.forEach(function (evt) {
+        document.addEventListener(evt, resetTimer, { passive: true, capture: false });
+    });
+
+    // ── Sincronización cross-tab via localStorage (fallback) ─────────────────
+    window.addEventListener('storage', function (e) {
+        if (e.key === CONFIG.STORAGE_KEY) resetTimerSilent();
+    });
+
+    // ── Reactivar al volver a la pestaña ─────────────────────────────────────
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') resetTimer();
+    });
+
+    // ── Logging server-side vía ActividadSistema ──────────────────────────────
+    function registrarEvento() {
+        try {
+            var payload = {
+                tipo   : 'auto_refresh_expediente',
+                url    : window.location.href.substring(0, 500),
+                agente : navigator.userAgent.substring(0, 200),
+                ts     : new Date().toISOString(),
+            };
+            // sendBeacon: funciona incluso durante la descarga de la página
+            if (navigator.sendBeacon && CONFIG.LOG_ENDPOINT && CONFIG.CSRF_TOKEN) {
+                var fd = new FormData();
+                Object.keys(payload).forEach(function (k) { fd.append(k, payload[k]); });
+                fd.append('_token', CONFIG.CSRF_TOKEN);
+                navigator.sendBeacon(CONFIG.LOG_ENDPOINT, fd);
+            }
+            // Log local para diagnóstico (últimas 20 entradas)
+            try {
+                var logs = JSON.parse(localStorage.getItem('sve_refresh_log') || '[]');
+                logs.push({ ts: payload.ts, url: payload.url });
+                if (logs.length > 20) logs.splice(0, logs.length - 20);
+                localStorage.setItem('sve_refresh_log', JSON.stringify(logs));
+            } catch (_) {}
+        } catch (_) {}
+    }
+
+    // ── Arrancar el sistema de detección ─────────────────────────────────────
+    resetTimer();
+
+})();
 </script>
 
 </body>

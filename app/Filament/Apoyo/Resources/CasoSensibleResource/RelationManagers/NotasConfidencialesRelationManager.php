@@ -73,11 +73,9 @@ class NotasConfidencialesRelationManager extends RelationManager
                             ->required(),
                         Forms\Components\Toggle::make('es_critica')
                             ->label('¿Es nota crítica?'),
-                    ])
-                    ->mutateFormDataBeforeCreate(function (array $data): array {
-                        $data['autor_id'] = auth()->id();
-                        return $data;
-                    }),
+                        Forms\Components\Hidden::make('autor_id')
+                            ->default(fn () => auth()->id()),
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()

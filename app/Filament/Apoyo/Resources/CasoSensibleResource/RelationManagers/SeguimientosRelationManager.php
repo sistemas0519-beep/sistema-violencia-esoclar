@@ -41,19 +41,30 @@ class SeguimientosRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make()
                     ->label('Nuevo Seguimiento')
                     ->form([
-                        Forms\Components\TextInput::make('accion')
-                            ->label('Acción Realizada')
-                            ->required(),
+                        Forms\Components\Select::make('accion')
+                            ->label('Tipo de Acción')
+                            ->options([
+                                'llamada'      => '📞 Llamada telefónica',
+                                'reunion'      => '🤝 Reunión presencial',
+                                'intervencion' => '🎯 Intervención directa',
+                                'derivacion'   => '↗️ Derivación a especialista',
+                                'cierre'       => '✅ Cierre de caso',
+                                'otro'         => '📋 Otro',
+                            ])
+                            ->required()
+                            ->native(false)
+                            ->default('otro'),
                         Forms\Components\Textarea::make('notas')
-                            ->rows(3),
+                            ->label('Descripción')
+                            ->rows(3)
+                            ->required(),
                         Forms\Components\DateTimePicker::make('fecha_seguimiento')
+                            ->label('Fecha y Hora')
                             ->default(now())
                             ->required(),
-                    ])
-                    ->mutateFormDataBeforeCreate(function (array $data): array {
-                        $data['responsable_id'] = auth()->id();
-                        return $data;
-                    }),
+                        Forms\Components\Hidden::make('responsable_id')
+                            ->default(fn () => auth()->id()),
+                    ]),
             ]);
     }
 }
