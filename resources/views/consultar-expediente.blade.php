@@ -718,22 +718,169 @@
     <div id="tab-login" class="login-section">
 
         @auth
-            {{-- Ya autenticado --}}
-            <div class="login-logged-in">
-                <div class="logged-icon">✅</div>
-                <h3>Sesión activa</h3>
-                <p>
-                    Has iniciado sesión como
-                    <strong style="color:var(--text-primary)">{{ auth()->user()->name }}</strong>
-                    ({{ auth()->user()->rol }}).
-                </p>
-                <a href="{{ url('/dashboard') }}" class="btn-goto-panel">
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    Ir a mi Panel
-                </a>
-            </div>
+            @php $authUser = auth()->user(); @endphp
+            @if(in_array($authUser->rol, ['alumno', 'docente']))
+                {{-- ── Vista personal de expedientes (alumno / docente) ── --}}
+                <div style="margin-bottom:1.5rem;">
+                    <div class="page-badge" style="margin-bottom:.75rem; display:inline-flex;">
+                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Mis Expedientes
+                    </div>
+                    <h2 style="font-size:1.2rem; font-weight:800; margin-bottom:.4rem; color:var(--text-primary);">
+                        Bienvenido, <span style="background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">{{ $authUser->name }}</span>
+                    </h2>
+                    <p style="color:var(--text-muted); font-size:.85rem; margin-bottom:0; line-height:1.6;">
+                        Consulta el estado actual de tus denuncias. También puedes buscar por número de expediente.
+                    </p>
+                </div>
+
+                {{-- Búsqueda por código --}}
+                <div class="search-card" style="margin-bottom:1.5rem;">
+                    <form method="GET" action="{{ route('consultar.expediente') }}" id="miConsultaForm">
+                        <input type="hidden" name="tab" value="login">
+                        <input type="hidden" name="tipo" value="codigo">
+                        <label class="search-label" for="miCodigoInput">Número de expediente</label>
+                        <div class="search-input-wrap">
+                            <input
+                                type="text"
+                                id="miCodigoInput"
+                                name="busqueda"
+                                class="search-input"
+                                placeholder="Ej. VIO-2026-XXXXXX"
+                                value="{{ ($buscado && $esMiConsulta) ? old('busqueda', $busqueda ?? '') : '' }}"
+                                autocomplete="off">
+                            <button type="submit" class="search-btn">
+                                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                Buscar
+                            </button>
+                        </div>
+                        @if($buscado && $esMiConsulta && $resultados && $resultados->isEmpty())
+                            <div class="error-msg" style="margin-top:.75rem;">
+                                No se encontró ningún expediente con ese código en tu cuenta.
+                            </div>
+                        @endif
+                    </form>
+                </div>
+
+                {{-- Lista de expedientes --}}
+                @php
+                    $tipoLabels2 = [
+                        'fisica' => 'Física', 'psicologica' => 'Psicológica', 'verbal' => 'Verbal',
+                        'sexual' => 'Sexual', 'ciberacoso' => 'Ciberacoso', 'bullying' => 'Bullying',
+                        'cyberbullying' => 'Cyberbullying', 'discriminacion' => 'Discriminación', 'otro' => 'Otro',
+                    ];
+                    $estadoLabels2 = [
+                        'pendiente'  => 'Pendiente', 'en_proceso' => 'En Proceso',
+                        'resuelto'   => 'Resuelto',  'cerrado'    => 'Cerrado',
+                    ];
+                    $estadoDesc2 = [
+                        'pendiente'  => 'Tu caso ha sido recibido y está en espera de ser asignado a un profesional.',
+                        'en_proceso' => 'Tu caso está siendo atendido activamente por un profesional de apoyo.',
+                        'resuelto'   => 'El caso ha sido atendido y marcado como resuelto por el equipo.',
+                        'cerrado'    => 'El expediente ha sido cerrado.',
+                    ];
+                    $casosAMostrar = ($buscado && $esMiConsulta && $resultados && $resultados->isNotEmpty())
+                        ? $resultados
+                        : $misCasos;
+                    $esResultadoBusqueda = ($buscado && $esMiConsulta && $resultados && $resultados->isNotEmpty());
+                @endphp
+
+                @if($casosAMostrar && $casosAMostrar->isNotEmpty())
+                    <p class="results-header">
+                        @if($esResultadoBusqueda)
+                            Resultado encontrado para «{{ $busqueda }}»
+                        @else
+                            {{ $casosAMostrar->count() }} expediente{{ $casosAMostrar->count() !== 1 ? 's' : '' }} registrado{{ $casosAMostrar->count() !== 1 ? 's' : '' }}
+                        @endif
+                    </p>
+                    @foreach($casosAMostrar as $caso)
+                        <div class="caso-card">
+                            <div class="caso-header">
+                                <span class="caso-code">{{ $caso->codigo_caso }}</span>
+                                <span class="badge badge-{{ $caso->estado }}">
+                                    <span class="badge-dot dot-{{ $caso->estado }}"></span>
+                                    {{ $estadoLabels2[$caso->estado] ?? $caso->estado }}
+                                </span>
+                            </div>
+                            <p style="font-size:.875rem; color:var(--text-muted); line-height:1.6; margin-bottom:.5rem;">
+                                {{ $estadoDesc2[$caso->estado] ?? '' }}
+                            </p>
+                            <div class="caso-grid">
+                                <div class="caso-field">
+                                    <span class="caso-field-label">Tipo de incidente</span>
+                                    <span class="caso-field-value">{{ $tipoLabels2[$caso->tipo_violencia] ?? $caso->tipo_violencia }}</span>
+                                </div>
+                                <div class="caso-field">
+                                    <span class="caso-field-label">Prioridad</span>
+                                    <span class="caso-field-value" style="text-transform:capitalize;">{{ $caso->prioridad }}</span>
+                                </div>
+                                <div class="caso-field">
+                                    <span class="caso-field-label">Institución educativa</span>
+                                    <span class="caso-field-value">{{ $caso->escuela_nombre ?? '—' }}</span>
+                                </div>
+                                <div class="caso-field">
+                                    <span class="caso-field-label">Ubicación</span>
+                                    <span class="caso-field-value">
+                                        {{ implode(', ', array_filter([$caso->distrito, $caso->provincia, $caso->region])) ?: '—' }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="timeline">
+                                <span>
+                                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    Registrado: {{ $caso->created_at->format('d/m/Y H:i') }}
+                                </span>
+                                <span>
+                                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                    Última actualización: {{ $caso->updated_at->diffForHumans() }}
+                                </span>
+                            </div>
+                        </div>
+                    @endforeach
+                @else
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <p class="empty-title">No tienes expedientes registrados</p>
+                        <p class="empty-sub">Cuando registres una denuncia, aparecerá aquí con su estado actual.</p>
+                    </div>
+                @endif
+
+                {{-- Cerrar sesión --}}
+                <div style="text-align:center; margin-top:2rem; padding-top:1.25rem; border-top:1px solid var(--border);">
+                    <form method="POST" action="{{ route('logout') }}" style="display:inline;">
+                        @csrf
+                        <button type="submit" style="background:transparent; border:1px solid var(--border); color:var(--text-muted); padding:.5rem 1.25rem; border-radius:8px; font-size:.85rem; cursor:pointer; font-family:inherit; transition:all .2s;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-muted)'">
+                            Cerrar Sesión
+                        </button>
+                    </form>
+                </div>
+
+            @else
+                {{-- Admin / Psicólogo / Asistente → acceso al panel completo --}}
+                <div class="login-logged-in">
+                    <div class="logged-icon">✅</div>
+                    <h3>Sesión activa</h3>
+                    <p>
+                        Has iniciado sesión como
+                        <strong style="color:var(--text-primary)">{{ $authUser->name }}</strong>
+                        ({{ $authUser->rol }}).
+                    </p>
+                    <a href="{{ url('/dashboard') }}" class="btn-goto-panel">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        Ir a mi Panel
+                    </a>
+                </div>
+            @endif
         @else
             <div class="login-card">
 
@@ -798,7 +945,7 @@
                 </div>
 
                 <!-- Formulario de login -->
-                <form method="POST" action="{{ route('login') }}" id="loginFormExpediente">
+                <form method="POST" action="{{ route('consultar.login') }}" id="loginFormExpediente">
                     @csrf
 
                     <div class="login-field">
@@ -911,7 +1058,8 @@ function selectLoginProfile(email, pass, card) {
         tabParam = new URL(window.location.href).searchParams.get('tab') || '';
     } catch (e) {}
 
-    if (tabParam === 'login' || hasLoginErrors) {
+    var esMiConsulta = @json($esMiConsulta);
+    if (tabParam === 'login' || hasLoginErrors || esMiConsulta) {
         switchTab('login');
     }
 })();

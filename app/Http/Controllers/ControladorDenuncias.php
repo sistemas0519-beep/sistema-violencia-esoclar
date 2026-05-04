@@ -7,6 +7,7 @@ use App\Models\ActividadSistema;
 use App\Models\Caso;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -95,10 +96,27 @@ class ControladorDenuncias extends Controller
     /** Consulta pública del estado de un expediente/caso */
     public function consultarExpediente(Request $request)
     {
-        $resultados = null;
-        $busqueda   = null;
-        $tipo       = null;
-        $buscado    = false;
+        $resultados   = null;
+        $busqueda     = null;
+        $tipo         = null;
+        $buscado      = false;
+        $esMiConsulta = false;
+        $misCasos     = null;
+
+        // Si el usuario está autenticado como alumno/docente, cargar sus casos automáticamente
+        $authUser = auth()->user();
+        if ($authUser && in_array($authUser->rol, ['alumno', 'docente'])) {
+            $esMiConsulta = true;
+            $misCasos = Caso::select([
+                'id', 'codigo_caso', 'tipo_violencia', 'estado', 'prioridad',
+                'es_anonimo', 'escuela_nombre', 'distrito', 'provincia', 'region',
+                'created_at', 'updated_at',
+            ])
+            ->where('denunciante_id', $authUser->id)
+            ->orderByDesc('updated_at')
+            ->limit(20)
+            ->get();
+        }
 
         // Búsqueda rápida desde welcome (?q=) — detecta tipo automáticamente
         if ($request->filled('q') && !$request->filled('busqueda')) {
@@ -123,6 +141,11 @@ class ControladorDenuncias extends Controller
                 'created_at', 'updated_at',
             ]);
 
+            // Si la búsqueda viene del panel personal (tab=login), restringir a sus casos
+            if ($esMiConsulta && $request->input('tab') === 'login') {
+                $query->where('denunciante_id', $authUser->id);
+            }
+
             if ($tipo === 'codigo') {
                 $query->where('codigo_caso', strtoupper($busqueda));
             } else {
@@ -136,7 +159,38 @@ class ControladorDenuncias extends Controller
             $resultados = $query->paginate(1)->withQueryString();
         }
 
-        return view('consultar-expediente', compact('resultados', 'busqueda', 'tipo', 'buscado'));
+        return view('consultar-expediente', compact(
+            'resultados', 'busqueda', 'tipo', 'buscado', 'esMiConsulta', 'misCasos'
+        ));
+    }
+
+    /**
+     * Autenticación desde la página de consulta de expediente.
+     * Alumno/docente → redirige a /consultar-expediente?tab=login (vista personal).
+     * Admin/psicologo/asistente → redirige al dashboard del panel.
+     */
+    public function loginDesdeConsultar(Request $request)
+    {
+        $credentials = $request->validate([
+            'email'    => 'required|email|max:255',
+            'password' => 'required|string',
+        ]);
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+
+            $user = Auth::user();
+            if (in_array($user->rol, ['alumno', 'docente'])) {
+                return redirect()->route('consultar.expediente', ['tab' => 'login']);
+            }
+
+            // Admin / psicologo / asistente → panel correspondiente
+            return redirect()->intended(route('dashboard'));
+        }
+
+        return back()
+            ->withErrors(['email' => 'Las credenciales no son correctas. Verifica tu correo y contraseña.'])
+            ->onlyInput('email');
     }
 
     /**

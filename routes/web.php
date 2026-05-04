@@ -48,6 +48,11 @@ Route::get('/', function (Request $request) {
 Route::get('/consultar-expediente', [ControladorDenuncias::class, 'consultarExpediente'])
     ->name('consultar.expediente');
 
+// ─── Login desde consulta de expediente (redirige según rol) ─────────────────
+Route::post('/consultar-login', [ControladorDenuncias::class, 'loginDesdeConsultar'])
+    ->middleware('throttle:10,1')
+    ->name('consultar.login');
+
 // ─── Logging de auto-refresh (público, rate-limited) ─────────────────────────
 Route::post('/log-auto-refresh', [ControladorDenuncias::class, 'logAutoRefresh'])
     ->middleware('throttle:30,1')
