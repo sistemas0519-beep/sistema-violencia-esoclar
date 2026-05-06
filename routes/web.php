@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ControladorDenuncias;
 use App\Http\Controllers\ControladorSeguimiento;
+use App\Http\Controllers\ConsultarDenunciasController;
 use App\Http\Controllers\ProfileController;
 use App\Models\Caso;
 use Illuminate\Http\Request;
@@ -164,6 +165,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/psicologo/caso/{caso}/asignar', [ControladorSeguimiento::class, 'asignar'])
             ->name('caso.asignar');
+    });
+});
+
+// ─── Módulo: Consultar Mis Denuncias (alumno / docente) ───────────────────────
+Route::prefix('mis-denuncias')->name('mis-denuncias.')->group(function () {
+
+    // Login del módulo (público)
+    Route::get('/', [ConsultarDenunciasController::class, 'index'])
+        ->name('login');
+
+    Route::post('/', [ConsultarDenunciasController::class, 'procesarLogin'])
+        ->middleware('throttle:10,1')
+        ->name('login.post');
+
+    // Logout del módulo (vuelve al login del módulo, no al dashboard)
+    Route::post('/salir', [ConsultarDenunciasController::class, 'salir'])
+        ->name('salir');
+
+    // Rutas protegidas: requieren autenticación
+    Route::middleware('auth')->group(function () {
+        Route::get('/lista', [ConsultarDenunciasController::class, 'lista'])
+            ->name('lista');
+
+        Route::get('/detalle/{codigo}', [ConsultarDenunciasController::class, 'detalle'])
+            ->name('detalle')
+            ->where('codigo', '[A-Za-z0-9\-]+');
     });
 });
 
